@@ -1,6 +1,72 @@
 import { ApplicationMenu, BrowserView, BrowserWindow } from "electrobun/bun";
 import type { MainRPC } from "shared/rpc";
 
+import path from "node:path";
+import fs from "node:fs";
+
+
+export function loadNativeAddon(name: string)
+{
+    const projectRoot =
+        path.resolve(
+            process.cwd(),
+            "../../../../"
+        );
+
+
+    const candidates = [
+        path.join(
+            projectRoot,
+            "native/linux-generic",
+            `${name}.node`
+        ),
+
+        path.join(
+            projectRoot,
+            "bin/native",
+            `${name}.node`
+        )
+    ];
+
+
+    for(const candidate of candidates)
+    {
+        console.log(
+            "Trying:",
+            candidate
+        );
+
+
+        if(fs.existsSync(candidate))
+        {
+            console.log(
+                "Loading:",
+                candidate
+            );
+
+            return require(candidate);
+        }
+    }
+
+
+    throw new Error(
+        "Native addon missing:\n" +
+        candidates.join("\n")
+    );
+}
+
+const addon = loadNativeAddon("stockfish");
+
+console.log("before");
+
+const instance = new addon.Stockfish();
+
+console.log("after");
+
+(globalThis as any).keep = instance;
+
+console.log("kept");
+
 // HMR: use Vite dev server if running, otherwise use bundled views
 async function getMainViewUrl(): Promise<string> {
 	try {

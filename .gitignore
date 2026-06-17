@@ -3,3 +3,7 @@ dist/
 build/
 *.app
 *.dmg
+
+*.nnue
+
+/native/linux-generic/
