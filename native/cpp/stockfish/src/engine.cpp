@@ -61,37 +61,20 @@ constexpr NumaAutoPolicy DefaultNumaPolicy = BundledL3Policy{32};
 Engine::Engine(std::optional<std::string> path) :
     binaryDirectory(path ? CommandLine::get_binary_directory(*path) : ""),
     numaContext(NumaConfig::from_system(DefaultNumaPolicy)),
-    states(StateListPtr(new std::deque<StateInfo>(1))),
+    states(new std::deque<StateInfo>(1)),
     threads(),
-    networks(
-        numaContext,
-        std::make_unique<NN::Networks>(
-            NN::EvalFile{"", "", ""},
-            NN::EvalFile{"", "", ""}
-        )
-    )
-{
+    networks(numaContext,
+             // Heap-allocate because sizeof(NN::Networks) is large
+             std::make_unique<NN::Networks>(NN::EvalFile{EvalFileDefaultNameBig, "None", ""},
+                                            NN::EvalFile{EvalFileDefaultNameSmall, "None", ""})) {
+
     pos.set(StartFEN, false, &states->back());
-    states = StateListPtr(new std::deque<StateInfo>(1));
-    ////////////////////////////////////////////
-    std::cerr << "ENGINE STEP A" << std::endl;
-    ////////////////////////////////////////////
-    
-    pos.set(StartFEN, false, &states->back());
-    
-    ////////////////////////////////////////////
-    std::cerr << "ENGINE STEP B" << std::endl;
-    ////////////////////////////////////////////
 
     options.add(  //
       "Debug Log File", Option("", [](const Option& o) {
           start_logger(o);
           return std::nullopt;
       }));
-
-    /////////////////////////////////////////////////////
-    std::cerr << "ENGINE STEP C" << std::endl;
-    /////////////////////////////////////////////////////
 
     options.add(  //
       "NumaPolicy", Option("auto", [this](const Option& o) {
@@ -100,19 +83,11 @@ Engine::Engine(std::optional<std::string> path) :
                + thread_allocation_information_as_string();
       }));
 
-      /////////////////////////////////////////////////////
-    std::cerr << "ENGINE STEP D" << std::endl;
-    /////////////////////////////////////////////////////
-
     options.add(  //
       "Threads", Option(1, 1, MaxThreads, [this](const Option&) {
           resize_threads();
           return thread_allocation_information_as_string();
       }));
-
-      /////////////////////////////////////////////////////
-    std::cerr << "ENGINE STEP E" << std::endl;
-    /////////////////////////////////////////////////////
 
     options.add(  //
       "Hash", Option(16, 1, MaxHashMB, [this](const Option& o) {
@@ -120,33 +95,17 @@ Engine::Engine(std::optional<std::string> path) :
           return std::nullopt;
       }));
 
-      /////////////////////////////////////////////////////
-    std::cerr << "ENGINE STEP F" << std::endl;
-    /////////////////////////////////////////////////////
-
     options.add(  //
       "Clear Hash", Option([this](const Option&) {
           search_clear();
           return std::nullopt;
       }));
 
-      /////////////////////////////////////////////////////
-    std::cerr << "ENGINE STEP G" << std::endl;
-    /////////////////////////////////////////////////////
-
     options.add(  //
       "Ponder", Option(false));
 
-      /////////////////////////////////////////////////////
-    std::cerr << "ENGINE STEP H" << std::endl;
-    /////////////////////////////////////////////////////
-
     options.add(  //
       "MultiPV", Option(1, 1, MAX_MOVES));
-
-      /////////////////////////////////////////////////////
-    std::cerr << "ENGINE STEP I" << std::endl;
-    /////////////////////////////////////////////////////
 
     options.add("Skill Level", Option(20, 0, 20));
 
@@ -176,19 +135,11 @@ Engine::Engine(std::optional<std::string> path) :
 
     options.add("SyzygyProbeLimit", Option(7, 0, 7));
 
-    /////////////////////////////////////////////////////
-    std::cerr << "ENGINE STEP J" << std::endl;
-    /////////////////////////////////////////////////////
-
     options.add(  //
       "EvalFile", Option(EvalFileDefaultNameBig, [this](const Option& o) {
           load_big_network(o);
           return std::nullopt;
       }));
-
-      /////////////////////////////////////////////////////
-    std::cerr << "ENGINE STEP K" << std::endl;
-    /////////////////////////////////////////////////////
 
     options.add(  //
       "EvalFileSmall", Option(EvalFileDefaultNameSmall, [this](const Option& o) {
@@ -196,20 +147,8 @@ Engine::Engine(std::optional<std::string> path) :
           return std::nullopt;
       }));
 
-      /////////////////////////////////////////////////////
-    std::cerr << "ENGINE STEP L" << std::endl;
-    /////////////////////////////////////////////////////
-
-    // load_networks();
-
-    /////////////////////////////////////////////////////
-    std::cerr << "ENGINE STEP M" << std::endl;
-    /////////////////////////////////////////////////////
+    load_networks();
     resize_threads();
-
-    /////////////////////////////////////////////////////
-    std::cerr << "ENGINE STEP N" << std::endl;
-    /////////////////////////////////////////////////////
 }
 
 std::uint64_t Engine::perft(const std::string& fen, Depth depth, bool isChess960) {

@@ -180,7 +180,6 @@ class Position {
     void swap_piece(Square s, Piece pc, DirtyThreats* const dts = nullptr);
 
    private:
-    void clear();
     // Initialization helpers (used while setting up a position)
     void set_castling_right(Color c, Square rfrom);
     Key  compute_material_key() const;

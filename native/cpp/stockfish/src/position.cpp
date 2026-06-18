@@ -114,32 +114,6 @@ inline int H2(Key h) { return (h >> 16) & 0x1fff; }
 std::array<Key, 8192>  cuckoo;
 std::array<Move, 8192> cuckooMove;
 
-void Position::clear()
-{
-    board.fill(NO_PIECE);
-
-    byTypeBB.fill(0);
-    byColorBB.fill(0);
-
-    std::fill(std::begin(pieceCount), std::end(pieceCount), 0);
-    std::fill(std::begin(castlingRightsMask),
-              std::end(castlingRightsMask),
-              0);
-
-    std::fill(std::begin(castlingRookSquare),
-              std::end(castlingRookSquare),
-              SQ_NONE);
-
-    std::fill(std::begin(castlingPath),
-              std::end(castlingPath),
-              0);
-
-    st = nullptr;
-    gamePly = 0;
-    sideToMove = WHITE;
-    chess960 = false;
-}
-
 // Initializes at startup the various arrays used to compute hash keys
 void Position::init() {
 
@@ -229,43 +203,17 @@ Position& Position::set(const string& fenStr, bool isChess960, StateInfo* si) {
     unsigned char      col, row, token;
     size_t             idx;
     Square             sq = SQ_A8;
-
-    std::cerr << "FEN=[" << fenStr << "]" << std::endl;
     std::istringstream ss(fenStr);
 
-    std::cerr << "POS before memset" << std::endl;
-
-    clear();
-    *si = StateInfo{};
+    std::memset(reinterpret_cast<char*>(this), 0, sizeof(Position));
+    std::memset(si, 0, sizeof(StateInfo));
     st = si;
 
-    std::cerr << "POS after memset" << std::endl;
-
-    std::cerr << "POS before noskipws" << std::endl;
     ss >> std::noskipws;
-    std::cerr << "POS after noskipws" << std::endl;
-
-
-    std::cerr << "POS before fen loop" << std::endl;
 
     // 1. Piece placement
-    while (true)
-{
-    std::cerr << "READ TOKEN" << std::endl;
-
-    if (!(ss >> token))
-        break;
-
-    std::cerr << "TOKEN READ=" << int(token) << std::endl;
-
-   if (std::isspace(static_cast<unsigned char>(token)))
+    while ((ss >> token) && !isspace(token))
     {
-        std::cerr << "FOUND SPACE" << std::endl;
-        break;
-    }
-
-    std::cerr << "TOKEN NOT SPACE" << std::endl;
-
         if (isdigit(token))
             sq += (token - '0') * EAST;  // Advance the given number of files
 
@@ -279,25 +227,10 @@ Position& Position::set(const string& fenStr, bool isChess960, StateInfo* si) {
         }
     }
 
-    std::cerr << "AFTER FEN LOOP" << std::endl;
-
-    ss >> std::skipws;
-
     // 2. Active color
-   std::cerr << "BEFORE ACTIVE COLOR" << std::endl;
-
     ss >> token;
-
-    std::cerr << "TOKEN1=" << token << std::endl;
-
     sideToMove = (token == 'w' ? WHITE : BLACK);
-
-    std::cerr << "SIDE SET" << std::endl;
-
     ss >> token;
-
-    std::cerr << "TOKEN2=" << token << std::endl;
-    std::cerr << "PEEK=" << char(ss.peek()) << std::endl;
 
     // 3. Castling availability. Compatible with 3 standards: Normal FEN standard,
     // Shredder-FEN that uses the letters of the columns on which the rooks began
@@ -306,27 +239,15 @@ Position& Position::set(const string& fenStr, bool isChess960, StateInfo* si) {
     // replaced by the file letter of the involved rook, as for the Shredder-FEN.
     while ((ss >> token) && !isspace(token))
     {
-        std::cerr << "CASTLE TOKEN=" << token << std::endl;
-
         Square rsq;
         Color  c    = islower(token) ? BLACK : WHITE;
         Piece  rook = make_piece(c, ROOK);
 
         token = char(toupper(token));
 
-        std::cerr << "AFTER UPPER token=" << token << std::endl;
-
         if (token == 'K')
-    {
-        std::cerr << "CASTLE K" << std::endl;
-
-        for (rsq = relative_square(c, SQ_H1);
-             piece_on(rsq) != rook;
-             --rsq)
-        {
-            std::cerr << "SEARCH ROOK rsq=" << rsq << std::endl;
-        }
-    }
+            for (rsq = relative_square(c, SQ_H1); piece_on(rsq) != rook; --rsq)
+            {}
 
         else if (token == 'Q')
             for (rsq = relative_square(c, SQ_A1); piece_on(rsq) != rook; ++rsq)
@@ -338,26 +259,16 @@ Position& Position::set(const string& fenStr, bool isChess960, StateInfo* si) {
         else
             continue;
 
-        std::cerr << "BEFORE set_castling_right" << std::endl;
         set_castling_right(c, rsq);
-        std::cerr << "AFTER set_castling_right" << std::endl;
     }
-
-    std::cerr << "AFTER CASTLING LOOP" << std::endl;
 
     // 4. En passant square.
     // Ignore if square is invalid or not on side to move relative rank 6.
-    std::cerr << "BEFORE ENPASSANT" << std::endl;
-
     bool enpassant = false;
-
-    std::cerr << "AFTER ENPASSANT INIT" << std::endl;
 
     if (((ss >> col) && (col >= 'a' && col <= 'h'))
         && ((ss >> row) && (row == (sideToMove == WHITE ? '6' : '3'))))
     {
-        std::cerr << "INSIDE ENPASSANT IF" << std::endl;
-
         st->epSquare = make_square(File(col - 'a'), Rank(row - '1'));
 
         // En passant square will be considered only if
@@ -368,7 +279,6 @@ Position& Position::set(const string& fenStr, bool isChess960, StateInfo* si) {
                  && (pieces(~sideToMove, PAWN) & (st->epSquare + pawn_push(~sideToMove)))
                  && !(pieces() & (st->epSquare | (st->epSquare + pawn_push(sideToMove))));
     }
-    std::cerr << "AFTER ENPASSANT IF" << std::endl;
 
     if (!enpassant)
         st->epSquare = SQ_NONE;
@@ -381,9 +291,7 @@ Position& Position::set(const string& fenStr, bool isChess960, StateInfo* si) {
     gamePly = std::max(2 * (gamePly - 1), 0) + (sideToMove == BLACK);
 
     chess960 = isChess960;
-    std::cerr << "BEFORE SET_STATE" << std::endl;
     set_state();
-    std::cerr << "AFTER SET_STATE" << std::endl;
 
     assert(pos_is_ok());
 
@@ -432,72 +340,18 @@ void Position::set_check_info() const {
 // The function is only used when a new position is set up
 void Position::set_state() const {
 
-    std::cerr << "SET_STATE 1" << std::endl;
-
     st->key               = 0;
     st->minorPieceKey     = 0;
     st->nonPawnKey[WHITE] = st->nonPawnKey[BLACK] = 0;
     st->pawnKey                                   = Zobrist::noPawns;
     st->nonPawnMaterial[WHITE] = st->nonPawnMaterial[BLACK] = VALUE_ZERO;
-
-    std::cerr << "SET_STATE 2 before checkers" << std::endl;
-
-        std::cerr << "SET_STATE SIDE="
-            << (sideToMove == WHITE ? "WHITE" : "BLACK")
-            << std::endl;
-
-    std::cerr << "KING BB="
-            << byTypeBB[KING]
-            << std::endl;
-
-    std::cerr << "WHITE KING COUNT="
-          << count<KING>(WHITE)
-          << std::endl;
-
-    std::cerr << "BLACK KING COUNT="
-            << count<KING>(BLACK)
-            << std::endl;
-
-    std::cerr << "WHITE KING BB="
-            << pieces(WHITE, KING)
-            << std::endl;
-
-    std::cerr << "BLACK KING BB="
-            << pieces(BLACK, KING)
-            << std::endl;
-
-    Square kingSq = square<KING>(sideToMove);
-
-    std::cerr << "KING SQ OK=" << kingSq << std::endl;
-
-    std::cerr << "KING SQ="
-            << kingSq
-            << std::endl;
-
-    std::cerr << "BEFORE attackers_to" << std::endl;
-
-    Bitboard atk = attackers_to(kingSq);
-
-    std::cerr << "AFTER attackers_to="
-            << atk
-            << std::endl;
-
-    st->checkersBB = atk & pieces(~sideToMove);
-
-    std::cerr << "AFTER checkersBB" << std::endl;
-
-    std::cerr << "SET_STATE 3 after checkers" << std::endl;
+    st->checkersBB = attackers_to(square<KING>(sideToMove)) & pieces(~sideToMove);
 
     set_check_info();
-
-    std::cerr << "SET_STATE 4 after check_info" << std::endl;
 
     for (Bitboard b = pieces(); b;)
     {
         Square s  = pop_lsb(b);
-
-         std::cerr << "SET_STATE piece square=" << s << std::endl;
-
         Piece  pc = piece_on(s);
         st->key ^= Zobrist::psq[pc][s];
 
@@ -526,8 +380,6 @@ void Position::set_state() const {
 
     st->key ^= Zobrist::castling[st->castlingRights];
     st->materialKey = compute_material_key();
-
-    std::cerr << "SET_STATE END" << std::endl;
 }
 
 Key Position::compute_material_key() const {
@@ -644,32 +496,11 @@ void Position::update_slider_blockers(Color c) const {
 // Slider attacks use the occupied bitboard to indicate occupancy.
 Bitboard Position::attackers_to(Square s, Bitboard occupied) const {
 
-    std::cerr << "ATTACKERS 1" << std::endl;
-auto r = attacks_bb<ROOK>(s, occupied);
-
-std::cerr << "ATTACKERS 2" << std::endl;
-auto b = attacks_bb<BISHOP>(s, occupied);
-
-std::cerr << "ATTACKERS 3" << std::endl;
-auto pw = attacks_bb<PAWN>(s, BLACK);
-
-std::cerr << "ATTACKERS 4" << std::endl;
-auto pb = attacks_bb<PAWN>(s, WHITE);
-
-std::cerr << "ATTACKERS 5" << std::endl;
-auto n = attacks_bb<KNIGHT>(s);
-
-std::cerr << "ATTACKERS 6" << std::endl;
-auto k = attacks_bb<KING>(s);
-
-std::cerr << "ATTACKERS 7" << std::endl;
-
-return (r & pieces(ROOK, QUEEN))
-     | (b & pieces(BISHOP, QUEEN))
-     | (pw & pieces(WHITE, PAWN))
-     | (pb & pieces(BLACK, PAWN))
-     | (n & pieces(KNIGHT))
-     | (k & pieces(KING));
+    return (attacks_bb<ROOK>(s, occupied) & pieces(ROOK, QUEEN))
+         | (attacks_bb<BISHOP>(s, occupied) & pieces(BISHOP, QUEEN))
+         | (attacks_bb<PAWN>(s, BLACK) & pieces(WHITE, PAWN))
+         | (attacks_bb<PAWN>(s, WHITE) & pieces(BLACK, PAWN))
+         | (attacks_bb<KNIGHT>(s) & pieces(KNIGHT)) | (attacks_bb<KING>(s) & pieces(KING));
 }
 
 bool Position::attackers_to_exist(Square s, Bitboard occupied, Color c) const {

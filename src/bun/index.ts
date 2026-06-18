@@ -57,15 +57,9 @@ export function loadNativeAddon(name: string)
 
 const addon = loadNativeAddon("stockfish");
 
-console.log("before");
-
 const instance = new addon.Stockfish();
 
-console.log("after");
-
 (globalThis as any).keep = instance;
-
-console.log("kept");
 
 // HMR: use Vite dev server if running, otherwise use bundled views
 async function getMainViewUrl(): Promise<string> {
