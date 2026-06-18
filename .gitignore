@@ -6,4 +6,5 @@ build/
 
 *.nnue
 
+/artifacts/
 /native/linux-generic/
