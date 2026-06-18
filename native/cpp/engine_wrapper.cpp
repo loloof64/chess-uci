@@ -1,5 +1,8 @@
 #include "engine_wrapper.h"
 
+#include "stockfish/src/bitboard.h"
+#include "stockfish/src/position.h"
+
 #include <iostream>
 
 
@@ -9,17 +12,19 @@ Napi::FunctionReference EngineWrapper::constructor;
 EngineWrapper::EngineWrapper(const Napi::CallbackInfo& info)
     : Napi::ObjectWrap<EngineWrapper>(info)
 {
-    std::cerr << "Creating engine START" << std::endl;
+    using namespace Stockfish;
+
+    Bitboards::init();
+    Position::init();
+
 
     engine = std::make_unique<Stockfish::Engine>();
-
-    std::cerr << "Creating engine END" << std::endl;
 }
 
 
 EngineWrapper::~EngineWrapper()
 {
-    std::cout << "EngineWrapper destroyed" << std::endl;
+    std::cerr << "EngineWrapper destroyed" << std::endl;
 }
 
 
