@@ -8,19 +8,16 @@ Napi::FunctionReference EngineWrapper::constructor;
 EngineWrapper::EngineWrapper(
     const Napi::CallbackInfo &info)
     : Napi::ObjectWrap<EngineWrapper>(info),
-
       output(
-          [this](const std::string &text)
+          [this](const std::string &s)
           {
-              Emit(text);
+              Emit(s);
           })
-
 {
 
     using namespace Stockfish;
 
     Bitboards::init();
-
     Position::init();
 
     char arg0[] = "stockfish";
@@ -33,15 +30,10 @@ EngineWrapper::EngineWrapper(
         std::make_unique<UCIEngine>(
             1,
             argv);
-
-    std::cin.rdbuf(&input);
-
-    std::cout.rdbuf(&output);
 }
 
 EngineWrapper::~EngineWrapper()
 {
-
     if (engineThread.joinable())
         engineThread.detach();
 }
@@ -91,6 +83,17 @@ Napi::Value EngineWrapper::Start(
     const Napi::CallbackInfo &info)
 {
 
+    auto env = info.Env();
+
+    std::cin.rdbuf(
+        &input);
+
+    std::cout.rdbuf(
+        &output);
+
+    std::cerr.rdbuf(
+        &output);
+
     engineThread =
         std::thread(
             [this]()
@@ -98,21 +101,25 @@ Napi::Value EngineWrapper::Start(
                 engine->loop();
             });
 
-    return info.Env().Undefined();
+    return env.Undefined();
 }
 
 Napi::Value EngineWrapper::Send(
     const Napi::CallbackInfo &info)
 {
 
-    auto env =
-        info.Env();
+    auto env = info.Env();
 
-    input.push(
+    if (info.Length() == 0)
+        return env.Undefined();
+
+    std::string cmd =
         info[0]
             .As<Napi::String>()
-            .Utf8Value() +
-        "\n");
+            .Utf8Value();
+
+    input.push(
+        cmd + "\n");
 
     return env.Undefined();
 }
@@ -135,7 +142,7 @@ Napi::Value EngineWrapper::OnOutput(
         Napi::ThreadSafeFunction::New(
             info.Env(),
             info[0].As<Napi::Function>(),
-            "StockfishOutput",
+            "stockfish-output",
             0,
             1);
 
@@ -156,13 +163,13 @@ void EngineWrapper::Emit(
         msg,
         [](Napi::Env env,
            Napi::Function cb,
-           std::string *data)
+           std::string *value)
         {
             cb.Call(
                 {Napi::String::New(
                     env,
-                    *data)});
+                    *value)});
 
-            delete data;
+            delete value;
         });
 }

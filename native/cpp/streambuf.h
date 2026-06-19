@@ -5,6 +5,7 @@
 #include <queue>
 #include <mutex>
 #include <functional>
+#include <condition_variable>
 
 class CallbackStreamBuf : public std::streambuf
 {
@@ -35,6 +36,10 @@ protected:
 
 private:
     std::queue<std::string> queue_;
+
     std::string current_;
+
     std::mutex mutex_;
+
+    std::condition_variable cv_;
 };

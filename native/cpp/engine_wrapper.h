@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <thread>
+#include <string>
 
 #include "streambuf.h"
 #include "stockfish/src/uci.h"
@@ -25,28 +26,27 @@ private:
     static Napi::FunctionReference constructor;
 
     Napi::Value Start(
-        const Napi::CallbackInfo &);
+        const Napi::CallbackInfo &info);
 
     Napi::Value Send(
-        const Napi::CallbackInfo &);
+        const Napi::CallbackInfo &info);
 
     Napi::Value Stop(
-        const Napi::CallbackInfo &);
+        const Napi::CallbackInfo &info);
 
     Napi::Value OnOutput(
-        const Napi::CallbackInfo &);
+        const Napi::CallbackInfo &info);
 
     void Emit(
-        const std::string &);
+        const std::string &text);
 
-private:
     std::unique_ptr<Stockfish::UCIEngine> engine;
 
     std::thread engineThread;
 
+    Napi::ThreadSafeFunction outputCallback;
+
     QueueStreamBuf input;
 
     CallbackStreamBuf output;
-
-    Napi::ThreadSafeFunction outputCallback;
 };

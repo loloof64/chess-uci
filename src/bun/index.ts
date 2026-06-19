@@ -31,13 +31,21 @@ const addon = loadNativeAddon("stockfish");
 const engine = new addon.Stockfish();
 
 engine.onOutput((msg: string) => {
-  console.log("SF:", msg);
+  console.log("FROM STOCKFISH:", msg);
 });
 
 engine.start();
 
-engine.send("uci");
-engine.send("isready");
+setTimeout(() => {
+  engine.send("uci");
+  engine.send("isready");
+
+  setTimeout(() => {
+    engine.send("position startpos");
+
+    engine.send("go depth 5");
+  }, 500);
+}, 500);
 
 // HMR: use Vite dev server if running, otherwise use bundled views
 async function getMainViewUrl(): Promise<string> {

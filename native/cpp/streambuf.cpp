@@ -26,19 +26,30 @@ int CallbackStreamBuf::overflow(
 void QueueStreamBuf::push(
     const std::string &data)
 {
-    std::lock_guard<std::mutex> lock(
-        mutex_);
 
-    queue_.push(data);
+    {
+        std::lock_guard lock(
+            mutex_);
+
+        queue_.push(
+            data);
+    }
+
+    cv_.notify_one();
 }
 
 int QueueStreamBuf::underflow()
 {
-    std::lock_guard<std::mutex> lock(
+
+    std::unique_lock lock(
         mutex_);
 
-    if (queue_.empty())
-        return EOF;
+    cv_.wait(
+        lock,
+        [this]()
+        {
+            return !queue_.empty();
+        });
 
     current_ =
         queue_.front();
@@ -50,5 +61,6 @@ int QueueStreamBuf::underflow()
         current_.data(),
         current_.data() + current_.size());
 
-    return *gptr();
+    return traits_type::to_int_type(
+        *gptr());
 }
