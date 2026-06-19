@@ -12,7 +12,8 @@
     "lint:fix": "biome check --write ."
   },
   "dependencies": {
-    "electrobun": "^1.16.0"
+    "electrobun": "^1.16.0",
+    "node-addon-api": "^8.8.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
