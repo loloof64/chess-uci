@@ -35,7 +35,12 @@ EngineWrapper::EngineWrapper(
 EngineWrapper::~EngineWrapper()
 {
     if (engineThread.joinable())
-        engineThread.detach();
+    {
+        input.push(
+            "quit\n");
+
+        engineThread.join();
+    }
 }
 
 Napi::Object EngineWrapper::Init(
