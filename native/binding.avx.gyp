@@ -6,6 +6,7 @@
       "sources": [
         "native/cpp/addon.cpp",
         "native/cpp/engine_wrapper.cpp",
+        "native/cpp/streambuf.cpp",
 
         "native/cpp/stockfish/src/benchmark.cpp",
         "native/cpp/stockfish/src/bitboard.cpp",

@@ -57,9 +57,31 @@ export function loadNativeAddon(name: string)
 
 const addon = loadNativeAddon("stockfish");
 
-const instance = new addon.Stockfish();
 
-(globalThis as any).keep = instance;
+const instance =
+    new addon.Stockfish();
+
+
+(globalThis as any).keep =
+    instance;
+
+
+// Start Stockfish UCI loop
+instance.start();
+
+
+// Send UCI commands
+instance.send("uci");
+
+instance.send("isready");
+
+instance.send(
+    "position startpos"
+);
+
+instance.send(
+    "go depth 15"
+);
 
 // HMR: use Vite dev server if running, otherwise use bundled views
 async function getMainViewUrl(): Promise<string> {
