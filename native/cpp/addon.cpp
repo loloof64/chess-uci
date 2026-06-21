@@ -3,8 +3,6 @@
 #include "engine_wrapper.h"
 #include "streambuf.h"
 
-QueueStreamBuf inputBuffer;
-
 Napi::Object Init(
     Napi::Env env,
     Napi::Object exports)

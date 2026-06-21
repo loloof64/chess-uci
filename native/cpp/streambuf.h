@@ -2,31 +2,14 @@
 
 #include <streambuf>
 #include <string>
-#include <queue>
-#include <mutex>
 #include <functional>
+#include <mutex>
 #include <condition_variable>
-
-class CallbackStreamBuf : public std::streambuf
-{
-public:
-    using Callback =
-        std::function<void(const std::string &)>;
-
-    explicit CallbackStreamBuf(
-        Callback cb);
-
-protected:
-    int overflow(
-        int ch) override;
-
-private:
-    Callback callback_;
-    std::string buffer_;
-};
+#include <queue>
 
 class QueueStreamBuf : public std::streambuf
 {
+
 public:
     void push(
         const std::string &data);
@@ -35,11 +18,34 @@ protected:
     int underflow() override;
 
 private:
-    std::queue<std::string> queue_;
+    std::mutex mutex;
 
-    std::string current_;
+    std::condition_variable cv;
 
-    std::mutex mutex_;
+    std::queue<std::string> queue;
 
-    std::condition_variable cv_;
+    std::string current;
+};
+
+class CallbackStreamBuf : public std::streambuf
+{
+
+public:
+    using Callback =
+        std::function<
+            void(const std::string &)>;
+
+    explicit CallbackStreamBuf(
+        Callback callback);
+
+protected:
+    int overflow(
+        int ch) override;
+
+    int sync() override;
+
+private:
+    Callback callback;
+
+    std::string buffer;
 };

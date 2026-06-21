@@ -1,17 +1,17 @@
 #pragma once
 
 #include <napi.h>
+
+#include <atomic>
 #include <memory>
 #include <thread>
-#include <string>
-#include <istream>
-#include <ostream>
 
 #include "streambuf.h"
-#include "stockfish/src/uci.h"
+#include "stockfish_runner.h"
 
 class EngineWrapper : public Napi::ObjectWrap<EngineWrapper>
 {
+
 public:
     static Napi::Object Init(
         Napi::Env env,
@@ -40,15 +40,19 @@ private:
     void Emit(
         const std::string &text);
 
-    QueueStreamBuf input;
-    QueueStreamBuf output;
+    QueueStreamBuf inputBuffer;
 
     std::istream inputStream;
+
+    CallbackStreamBuf outputBuffer;
+
     std::ostream outputStream;
 
-    std::unique_ptr<Stockfish::UCIEngine> engine;
+    std::unique_ptr<StockfishRunner> runner;
 
     std::thread engineThread;
 
-    Napi::ThreadSafeFunction outputCallback;
+    std::atomic<bool> running{false};
+
+    Napi::ThreadSafeFunction callback;
 };

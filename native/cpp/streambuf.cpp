@@ -1,66 +1,73 @@
 #include "streambuf.h"
 
+void QueueStreamBuf::push(
+    const std::string &data)
+{
+
+    {
+        std::lock_guard<std::mutex> lock(
+            mutex);
+
+        queue.push(data);
+    }
+
+    cv.notify_one();
+}
+
+int QueueStreamBuf::underflow()
+{
+
+    std::unique_lock<std::mutex> lock(
+        mutex);
+
+    cv.wait(
+        lock,
+        [this]
+        {
+            return !queue.empty();
+        });
+
+    current =
+        queue.front();
+
+    queue.pop();
+
+    setg(
+        current.data(),
+        current.data(),
+        current.data() + current.size());
+
+    return traits_type::to_int_type(
+        *gptr());
+}
+
 CallbackStreamBuf::CallbackStreamBuf(
     Callback cb)
-    : callback_(cb)
+
+    : callback(cb)
 {
 }
 
 int CallbackStreamBuf::overflow(
     int ch)
 {
-    if (ch == EOF)
-        return EOF;
 
-    buffer_ += char(ch);
-
-    if (ch == '\n')
-    {
-        callback_(buffer_);
-        buffer_.clear();
-    }
+    if (ch != EOF)
+        buffer +=
+            static_cast<char>(ch);
 
     return ch;
 }
 
-void QueueStreamBuf::push(
-    const std::string &data)
+int CallbackStreamBuf::sync()
 {
 
+    if (!buffer.empty())
     {
-        std::lock_guard lock(
-            mutex_);
+        callback(buffer);
 
-        queue_.push(
-            data);
+        buffer.clear();
     }
 
-    cv_.notify_one();
-}
-
-int QueueStreamBuf::underflow()
-{
-
-    std::unique_lock lock(
-        mutex_);
-
-    cv_.wait(
-        lock,
-        [this]()
-        {
-            return !queue_.empty();
-        });
-
-    current_ =
-        queue_.front();
-
-    queue_.pop();
-
-    setg(
-        current_.data(),
-        current_.data(),
-        current_.data() + current_.size());
-
-    return traits_type::to_int_type(
-        *gptr());
+    return 0;
 }

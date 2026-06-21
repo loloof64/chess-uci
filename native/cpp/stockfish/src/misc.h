@@ -36,10 +36,15 @@
 #include <string_view>
 #include <type_traits>
 #include <vector>
+#include <ostream>
 
 namespace Stockfish
 {
+
     class UCIEngine;
+
+    extern thread_local std::ostream *current_output;
+
 }
 
 #define stringify2(x) #x
@@ -47,6 +52,7 @@ namespace Stockfish
 
 namespace Stockfish
 {
+
     std::string engine_version_info();
     std::string engine_info(bool to_uci = false);
     std::string compiler_info();
@@ -129,7 +135,7 @@ namespace Stockfish
     };
     std::ostream &operator<<(std::ostream &, SyncCout);
 
-#define sync_cout std::cout << IO_LOCK
+#define sync_cout (*current_output)
 #define sync_endl std::endl \
                       << IO_UNLOCK
 

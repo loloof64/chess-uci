@@ -6,6 +6,7 @@
       "sources": [
         "native/cpp/addon.cpp",
         "native/cpp/engine_wrapper.cpp",
+        "native/cpp/stockfish_runner.cpp",
         "native/cpp/streambuf.cpp",
 
         "native/cpp/stockfish/src/benchmark.cpp",
@@ -31,7 +32,8 @@
         "native/cpp/stockfish/src/timeman.cpp",
         "native/cpp/stockfish/src/tt.cpp",
         "native/cpp/stockfish/src/uci.cpp",
-        "native/cpp/stockfish/src/ucioption.cpp"
+        "native/cpp/stockfish/src/ucioption.cpp",
+        "native/cpp/stockfish/src/tune.cpp"
       ],
 
       "include_dirs": [
@@ -52,6 +54,7 @@
         "-pthread",
         "-O3",
         "-fexceptions",
+        "-Werror",
         "-mavx",
         "-mpopcnt"
       ],

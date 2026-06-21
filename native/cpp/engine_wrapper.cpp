@@ -1,56 +1,13 @@
 #include "engine_wrapper.h"
 
-#include "stockfish/src/bitboard.h"
-#include "stockfish/src/position.h"
-
 Napi::FunctionReference EngineWrapper::constructor;
-
-EngineWrapper::EngineWrapper(
-    const Napi::CallbackInfo &info)
-    : Napi::ObjectWrap<EngineWrapper>(info),
-      inputStream(&input),
-      outputStream(&output)
-{
-
-    using namespace Stockfish;
-
-    Bitboards::init();
-    Position::init();
-
-    char arg0[] = "stockfish";
-
-    char *argv[] =
-        {
-            arg0,
-            nullptr};
-
-    engine =
-        std::make_unique<UCIEngine>(
-            1,
-            argv);
-
-    engine->setStreams(
-        &inputStream,
-        &outputStream);
-}
-
-EngineWrapper::~EngineWrapper()
-{
-    if (engineThread.joinable())
-    {
-        input.push(
-            "quit\n");
-
-        engineThread.join();
-    }
-}
 
 Napi::Object EngineWrapper::Init(
     Napi::Env env,
     Napi::Object exports)
 {
 
-    auto func =
+    auto clazz =
         DefineClass(
             env,
             "Stockfish",
@@ -75,31 +32,86 @@ Napi::Object EngineWrapper::Init(
             });
 
     constructor =
-        Napi::Persistent(func);
+        Napi::Persistent(clazz);
 
     constructor.SuppressDestruct();
 
     exports.Set(
         "Stockfish",
-        func);
+        clazz);
 
     return exports;
+}
+
+EngineWrapper::EngineWrapper(
+    const Napi::CallbackInfo &info)
+
+    : Napi::ObjectWrap<EngineWrapper>(info),
+
+      inputStream(&inputBuffer),
+
+      outputBuffer(
+          [this](const std::string &text)
+          {
+              Emit(text);
+          }),
+
+      outputStream(&outputBuffer)
+{
+}
+
+EngineWrapper::~EngineWrapper()
+{
+
+    if (runner)
+    {
+        inputBuffer.push(
+            "quit\n");
+    }
+
+    if (engineThread.joinable())
+    {
+        engineThread.join();
+    }
+
+    running = false;
+
+    if (callback)
+    {
+        callback.Release();
+    }
 }
 
 Napi::Value EngineWrapper::Start(
     const Napi::CallbackInfo &info)
 {
-    auto env = info.Env();
 
-    engine->setStreams(
-        &inputStream,
-        &outputStream);
+    auto env =
+        info.Env();
+
+    if (running)
+        return env.Undefined();
+
+    running = true;
 
     engineThread =
         std::thread(
             [this]()
             {
-                engine->loop();
+                runner =
+                    std::make_unique<
+                        StockfishRunner>(
+                        inputStream,
+                        outputStream);
+
+                runner->start();
+
+                if (runner)
+                {
+                    runner->stop();
+                }
+
+                running = false;
             });
 
     return env.Undefined();
@@ -109,28 +121,36 @@ Napi::Value EngineWrapper::Send(
     const Napi::CallbackInfo &info)
 {
 
-    auto env = info.Env();
+    if (!runner)
+        return info.Env().Undefined();
 
-    if (info.Length() == 0)
-        return env.Undefined();
-
-    std::string cmd =
+    auto cmd =
         info[0]
             .As<Napi::String>()
             .Utf8Value();
 
-    input.push(
+    inputBuffer.push(
         cmd + "\n");
 
-    return env.Undefined();
+    return info.Env().Undefined();
 }
 
 Napi::Value EngineWrapper::Stop(
     const Napi::CallbackInfo &info)
 {
 
-    input.push(
-        "quit\n");
+    if (runner)
+    {
+        inputBuffer.push(
+            "quit\n");
+    }
+
+    if (engineThread.joinable())
+    {
+        engineThread.join();
+    }
+
+    running = false;
 
     return info.Env().Undefined();
 }
@@ -139,12 +159,17 @@ Napi::Value EngineWrapper::OnOutput(
     const Napi::CallbackInfo &info)
 {
 
-    outputCallback =
+    callback =
         Napi::ThreadSafeFunction::New(
             info.Env(),
-            info[0].As<Napi::Function>(),
+
+            info[0]
+                .As<Napi::Function>(),
+
             "stockfish-output",
+
             0,
+
             1);
 
     return info.Env().Undefined();
@@ -154,23 +179,17 @@ void EngineWrapper::Emit(
     const std::string &text)
 {
 
-    if (!outputCallback)
+    if (!callback)
         return;
 
-    auto *msg =
-        new std::string(text);
-
-    outputCallback.BlockingCall(
-        msg,
-        [](Napi::Env env,
-           Napi::Function cb,
-           std::string *value)
+    callback.BlockingCall(
+        [text](
+            Napi::Env env,
+            Napi::Function fn)
         {
-            cb.Call(
+            fn.Call(
                 {Napi::String::New(
                     env,
-                    *value)});
-
-            delete value;
+                    text)});
         });
 }
