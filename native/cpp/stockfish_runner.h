@@ -1,15 +1,16 @@
 #pragma once
 
+#include <atomic>
 #include <iostream>
 #include <memory>
-#include <thread>
-#include <atomic>
 #include <string>
+#include <thread>
 
 #include "stockfish/src/uci.h"
 
 class StockfishRunner
 {
+
 public:
     StockfishRunner(
         std::istream &in,
@@ -29,10 +30,12 @@ private:
 
     std::ostream &output;
 
-    std::unique_ptr<Stockfish::UCIEngine> engine;
+    std::unique_ptr<
+        Stockfish::UCIEngine>
+        engine;
 
     std::thread thread;
 
-    std::atomic<bool> running =
-        false;
+    std::atomic<bool>
+        running{false};
 };

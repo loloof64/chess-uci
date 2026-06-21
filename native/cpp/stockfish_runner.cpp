@@ -2,6 +2,10 @@
 
 #include <iostream>
 
+#include "stockfish/src/bitboard.h"
+#include "stockfish/src/position.h"
+#include "stockfish/src/tune.h"
+
 StockfishRunner::StockfishRunner(
     std::istream &in,
     std::ostream &out)
@@ -26,8 +30,7 @@ void StockfishRunner::start()
         std::thread(
             [this]()
             {
-                char arg0[] =
-                    "stockfish";
+                char arg0[] = "stockfish";
 
                 char *argv[] =
                     {
@@ -42,11 +45,21 @@ void StockfishRunner::start()
                     std::cout.rdbuf(
                         output.rdbuf());
 
+                //
+                // Stockfish global initialization
+                //
+                Stockfish::Bitboards::init();
+
+                Stockfish::Position::init();
+
                 engine =
                     std::make_unique<
                         Stockfish::UCIEngine>(
                         1,
                         argv);
+
+                Stockfish::Tune::init(
+                    engine->engine_options());
 
                 engine->loop();
 
@@ -68,8 +81,7 @@ void StockfishRunner::send(
         command.c_str(),
         command.size());
 
-    input.rdbuf()->sputc(
-        '\n');
+    input.rdbuf()->sputc('\n');
 }
 
 void StockfishRunner::stop()
