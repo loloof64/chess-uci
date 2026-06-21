@@ -1,7 +1,6 @@
 #pragma once
 
 #include <napi.h>
-#include <memory>
 
 #include "stockfish_runner.h"
 
@@ -43,4 +42,7 @@ private:
 
 
     std::unique_ptr<StockfishRunner> runner;
+
+
+    Napi::ThreadSafeFunction callback;
 };

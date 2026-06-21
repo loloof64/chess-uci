@@ -1,8 +1,7 @@
 #include "engine_wrapper.h"
 
 
-Napi::FunctionReference
-EngineWrapper::constructor;
+Napi::FunctionReference EngineWrapper::constructor;
 
 
 
@@ -34,11 +33,14 @@ Napi::Object EngineWrapper::Init(
             });
 
 
+
     constructor =
         Napi::Persistent(func);
 
 
+
     constructor.SuppressDestruct();
+
 
 
     exports.Set(
@@ -46,8 +48,10 @@ Napi::Object EngineWrapper::Init(
         func);
 
 
+
     return exports;
 }
+
 
 
 
@@ -60,34 +64,64 @@ Napi::ObjectWrap<EngineWrapper>(info)
 
 
 
+
 EngineWrapper::~EngineWrapper()
 {
-
     if (runner)
         runner->stop();
-
 }
+
 
 
 
 Napi::Value EngineWrapper::Start(
-    const Napi::CallbackInfo& info)
+const Napi::CallbackInfo& info)
 {
 
-    if (!runner)
+    auto env =
+        info.Env();
+
+
+    if(!runner)
     {
         runner =
-            std::make_unique<
-                StockfishRunner>();
+            std::make_unique<StockfishRunner>();
     }
 
 
-    runner->start();
+    runner->start(
+        [env,this](const std::string& text)
+        {
+
+            if(callback)
+            {
+                auto* msg =
+                    new std::string(text);
 
 
-    return info.Env().Undefined();
+                callback.BlockingCall(
+                    msg,
+                    [](Napi::Env env,
+                       Napi::Function js,
+                       std::string* value)
+                    {
+                        js.Call(
+                        {
+                            Napi::String::New(
+                                env,
+                                *value)
+                        });
+
+
+                        delete value;
+                    });
+            }
+
+        });
+
+
+    return env.Undefined();
 }
-
 
 
 Napi::Value EngineWrapper::Send(
@@ -98,17 +132,18 @@ Napi::Value EngineWrapper::Send(
         return info.Env().Undefined();
 
 
-    std::string command =
+
+    runner->send(
         info[0]
-            .As<Napi::String>()
-            .Utf8Value();
+        .As<Napi::String>()
+        .Utf8Value());
 
-
-    runner->send(command);
 
 
     return info.Env().Undefined();
 }
+
+
 
 
 
@@ -118,6 +153,7 @@ Napi::Value EngineWrapper::Stop(
 
     if (runner)
         runner->stop();
+
 
 
     return info.Env().Undefined();

@@ -1,17 +1,14 @@
-#include "stockfish_runner.h"
+#include "streambuf.h"
 
 
 void QueueBuf::push(
-    const std::string& value)
+    const std::string& data)
 {
-
     {
         std::lock_guard<std::mutex> lock(mutex);
 
-        queue.push(
-            value + "\n");
+        queue.push(data + "\n");
     }
-
 
     cv.notify_one();
 }
@@ -20,7 +17,6 @@ void QueueBuf::push(
 
 int QueueBuf::underflow()
 {
-
     std::unique_lock<std::mutex> lock(mutex);
 
 
@@ -35,7 +31,6 @@ int QueueBuf::underflow()
     current =
         queue.front();
 
-
     queue.pop();
 
 
@@ -45,6 +40,5 @@ int QueueBuf::underflow()
         current.data() + current.size());
 
 
-    return traits_type::to_int_type(
-        *gptr());
+    return traits_type::to_int_type(*gptr());
 }

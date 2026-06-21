@@ -1,12 +1,13 @@
 #include "stockfish_runner.h"
 
-#include <iostream>
-
 
 #include "stockfish/src/bitboard.h"
 #include "stockfish/src/position.h"
 #include "stockfish/src/tune.h"
+#include "stockfish/src/uci.h"
 
+
+#include <iostream>
 
 
 StockfishRunner::StockfishRunner()
@@ -22,11 +23,15 @@ StockfishRunner::~StockfishRunner()
 
 
 
-void StockfishRunner::start()
+void StockfishRunner::start(
+    OutputCallback cb)
 {
 
-    if (running)
+    if(running)
         return;
+
+
+    callback = cb;
 
 
     running = true;
@@ -34,53 +39,65 @@ void StockfishRunner::start()
 
     thread =
         std::thread(
-            [this]()
-            {
-
-                char arg0[] = "stockfish";
-
-                char* argv[] =
-                {
-                    arg0,
-                    nullptr
-                };
-
-
-                Stockfish::Bitboards::init();
-
-                Stockfish::Position::init();
-
-
-                engine =
-                    std::make_unique<
-                        Stockfish::UCIEngine>(
-                            1,
-                            argv);
+            &StockfishRunner::run,
+            this);
+}
 
 
 
-                Stockfish::Tune::init(
-                    engine->engine_options());
+void StockfishRunner::run()
+{
+
+    char arg0[] = "stockfish";
+
+
+    char* argv[] =
+    {
+        arg0,
+        nullptr
+    };
+
+
+    Stockfish::Bitboards::init();
+
+    Stockfish::Position::init();
+
+
+    engine =
+        std::make_unique<
+            Stockfish::UCIEngine>(
+                1,
+                argv);
 
 
 
-                auto old =
-                    std::cin.rdbuf(
-                        &input);
+    Stockfish::Tune::init(
+        engine->engine_options());
 
 
 
-                engine->loop();
+    auto oldIn =
+        std::cin.rdbuf(
+            &inputBuffer);
+
+
+    auto oldOut =
+        std::cout.rdbuf(
+            &outputBuffer);
 
 
 
-                std::cin.rdbuf(old);
+    engine->loop();
 
 
-                running = false;
 
-            });
+    std::cin.rdbuf(oldIn);
 
+    std::cout.rdbuf(oldOut);
+
+
+
+    running=false;
 }
 
 
@@ -89,8 +106,7 @@ void StockfishRunner::send(
     const std::string& command)
 {
 
-    input.push(command);
-
+    inputBuffer.push(command);
 }
 
 
@@ -98,13 +114,16 @@ void StockfishRunner::send(
 void StockfishRunner::stop()
 {
 
-    if (running)
-        send("quit");
+    if(!running)
+        return;
 
 
-    if (thread.joinable())
+    send("quit");
+
+
+    if(thread.joinable())
         thread.join();
 
 
-    running = false;
-}
+    running=false;
+}   

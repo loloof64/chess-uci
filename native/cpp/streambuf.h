@@ -1,19 +1,19 @@
 #pragma once
 
 #include <streambuf>
-#include <string>
 #include <queue>
 #include <mutex>
 #include <condition_variable>
+#include <string>
 
 
-class QueueStreamBuf : public std::streambuf
+class QueueBuf : public std::streambuf
 {
 
 public:
 
     void push(
-        const std::string& data);
+        const std::string& s);
 
 
 protected:
@@ -23,11 +23,12 @@ protected:
 
 private:
 
-    std::mutex mutex;
-
-    std::condition_variable cv;
-
     std::queue<std::string> queue;
 
     std::string current;
+
+
+    std::mutex mutex;
+
+    std::condition_variable cv;
 };

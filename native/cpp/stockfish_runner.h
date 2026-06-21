@@ -1,78 +1,57 @@
 #pragma once
 
 #include <atomic>
-#include <condition_variable>
-#include <memory>
-#include <mutex>
-#include <queue>
-#include <string>
 #include <thread>
+#include <functional>
+#include <memory>
+#include <string>
 
-#include "stockfish/src/uci.h"
+#include "streambuf.h"
 
-
-class QueueBuf : public std::streambuf
-{
-
-public:
-
-    void push(
-        const std::string& value);
-
-
-protected:
-
-    int underflow() override;
-
-
-private:
-
-    std::mutex mutex;
-
-    std::condition_variable cv;
-
-    std::queue<std::string> queue;
-
-    std::string current;
-
-};
-
-
+namespace Stockfish {
+class UCIEngine;
+}
 
 class StockfishRunner
 {
-
 public:
+
+    using OutputCallback =
+        std::function<void(const std::string&)>;
+
 
     StockfishRunner();
 
     ~StockfishRunner();
 
 
-    void start();
-
-    void stop();
-
+    void start(OutputCallback cb);
 
     void send(
         const std::string& command);
 
 
+    void stop();
+
 
 private:
 
-    QueueBuf input;
+    void run();
 
 
-    std::unique_ptr<
-        Stockfish::UCIEngine>
-        engine;
+private:
 
+    std::atomic<bool> running{false};
 
     std::thread thread;
 
 
-    std::atomic<bool>
-        running{false};
+    std::unique_ptr<Stockfish::UCIEngine> engine;
 
+
+    QueueBuf inputBuffer;
+    QueueBuf outputBuffer;
+
+
+    OutputCallback callback;
 };
