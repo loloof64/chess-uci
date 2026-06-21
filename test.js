@@ -1,31 +1,26 @@
-// test.js
-const path = require("path");
+const sf = require("./build/Release/stockfish.node");
 
-const addonPath = path.resolve(__dirname, "build", "Release", "stockfish.node");
+const e = new sf.Stockfish();
 
-const sf = require(addonPath);
-
-console.log("Addon loaded");
-
-const engine = new sf.Stockfish();
-
-engine.onOutput((line) => {
+e.onOutput((line) => {
   console.log("SF>", line);
 });
 
-engine.start();
+e.start();
 
 setTimeout(() => {
-  console.log("send uci");
-  engine.send("uci");
-}, 1000);
+  e.send("uci");
+}, 500);
 
 setTimeout(() => {
-  console.log("send isready");
-  engine.send("isready");
-}, 3000);
+  e.send("isready");
+}, 1500);
 
 setTimeout(() => {
-  console.log("send quit");
-  engine.send("quit");
-}, 5000);
+  e.send("position startpos");
+  e.send("go depth 10");
+}, 2500);
+
+setTimeout(() => {
+  e.send("quit");
+}, 10000);
