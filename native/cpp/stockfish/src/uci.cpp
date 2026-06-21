@@ -31,6 +31,7 @@
 
 #include "benchmark.h"
 #include "engine.h"
+#include "misc.h"
 #include "memory.h"
 #include "movegen.h"
 #include "position.h"
@@ -41,6 +42,8 @@
 
 namespace Stockfish
 {
+
+    thread_local UCIEngine *UCIEngine::current = nullptr;
 
     constexpr auto BenchmarkCommand = "speedtest";
 
@@ -84,14 +87,14 @@ namespace Stockfish
 
     void UCIEngine::init_search_update_listeners()
     {
-        engine.set_on_iter([](const auto &i)
+        engine.set_on_iter([this](const auto &i)
                            { on_iter(i); });
-        engine.set_on_update_no_moves([](const auto &i)
+        engine.set_on_update_no_moves([this](const auto &i)
                                       { on_update_no_moves(i); });
         engine.set_on_update_full(
             [this](const auto &i)
             { on_update_full(i, engine.get_options()["UCI_ShowWDL"]); });
-        engine.set_on_bestmove([](const auto &bm, const auto &p)
+        engine.set_on_bestmove([this](const auto &bm, const auto &p)
                                { on_bestmove(bm, p); });
         engine.set_on_verify_networks([this](const auto &s)
                                       { print_info_string(s); });
@@ -99,6 +102,8 @@ namespace Stockfish
 
     void UCIEngine::loop()
     {
+        current = this;
+
         std::string token, cmd;
 
         for (int i = 1; i < cli.argc; ++i)
@@ -106,67 +111,70 @@ namespace Stockfish
 
         do
         {
-            if (cli.argc == 1 && !getline(*inputStream, cmd)) // Wait for an input or an end-of-file (EOF) indication
+            if (cli.argc == 1 && !getline(*inputStream, cmd))
                 cmd = "quit";
 
             std::istringstream is(cmd);
 
-            token.clear(); // Avoid a stale if getline() returns nothing or a blank line
+            token.clear();
             is >> std::skipws >> token;
 
             if (token == "quit" || token == "stop")
                 engine.stop();
 
-            // The GUI sends 'ponderhit' to tell that the user has played the expected move.
-            // So, 'ponderhit' is sent if pondering was done on the same move that the user
-            // has played. The search should continue, but should also switch from pondering
-            // to the normal search.
             else if (token == "ponderhit")
                 engine.set_ponderhit(false);
 
             else if (token == "uci")
             {
-                (*outputStream) << "id name " << engine_info(true) << "\n"
-                                << engine.get_options() << '\n'
-                                << std::flush;
-
-                (*outputStream) << "uciok" << '\n'
-                                << std::flush;
+                std::cout << "id name " << engine_info(true) << "\n"
+                          << engine.get_options() << '\n'
+                          << "uciok\n"
+                          << std::flush;
             }
 
             else if (token == "setoption")
                 setoption(is);
+
             else if (token == "go")
             {
-                // send info strings after the go command is sent for old GUIs and python-chess
                 print_info_string(engine.numa_config_information_as_string());
                 print_info_string(engine.thread_allocation_information_as_string());
                 go(is);
             }
+
             else if (token == "position")
                 position(is);
+
             else if (token == "ucinewgame")
                 engine.search_clear();
-            else if (token == "isready")
-                (*outputStream) << "readyok" << '\n'
-                                << std::flush;
 
-            // Add custom non-UCI commands, mainly for debugging purposes.
-            // These commands must not be used during a search!
+            else if (token == "isready")
+            {
+                std::cout << "readyok\n"
+                          << std::flush;
+            }
+
             else if (token == "flip")
                 engine.flip();
+
             else if (token == "bench")
                 bench(is);
+
             else if (token == BenchmarkCommand)
                 benchmark(is);
+
             else if (token == "d")
-                (*outputStream) << engine.visualize() << '\n'
-                                << std::flush;
+                std::cout << engine.visualize() << '\n'
+                          << std::flush;
+
             else if (token == "eval")
                 engine.trace_eval();
+
             else if (token == "compiler")
-                (*outputStream) << compiler_info() << '\n'
-                                << std::flush;
+                std::cout << compiler_info() << '\n'
+                          << std::flush;
+
             else if (token == "export_net")
             {
                 std::pair<std::optional<std::string>, std::string> files[2];
@@ -179,22 +187,10 @@ namespace Stockfish
 
                 engine.save_network(files);
             }
-            else if (token == "--help" || token == "help" || token == "--license" || token == "license")
-                (*outputStream)
-                    << "\nStockfish is a powerful chess engine for playing and analyzing."
-                       "\nIt is released as free software licensed under the GNU GPLv3 License."
-                       "\nStockfish is normally used with a graphical user interface (GUI) and implements"
-                       "\nthe Universal Chess Interface (UCI) protocol to communicate with a GUI, an API, etc."
-                       "\nFor any further information, visit https://github.com/official-stockfish/Stockfish#readme"
-                       "\nor read the corresponding README.md and Copying.txt files distributed along with this program.\n"
-                    << '\n'
-                    << std::flush;
-            else if (!token.empty() && token[0] != '#')
-                (*outputStream) << "Unknown command: '" << cmd << "'. Type help for more information."
-                                << '\n'
-                                << std::flush;
 
-        } while (token != "quit" && cli.argc == 1); // The command-line arguments are one-shot
+        } while (token != "quit" && cli.argc == 1);
+
+        current = nullptr;
     }
 
     Search::LimitsType UCIEngine::parse_limits(std::istream &is)
@@ -712,8 +708,13 @@ namespace Stockfish
     {
         inputStream = in;
         outputStream = out;
-
-        engine.setOutputStream(out);
     }
 
+    std::ostream &UCIEngine::active_output()
+    {
+        if (current)
+            return *current->outputStream;
+
+        return *current->outputStream;
+    }
 } // namespace Stockfish

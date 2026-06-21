@@ -8,11 +8,8 @@ Napi::FunctionReference EngineWrapper::constructor;
 EngineWrapper::EngineWrapper(
     const Napi::CallbackInfo &info)
     : Napi::ObjectWrap<EngineWrapper>(info),
-      output(
-          [this](const std::string &s)
-          {
-              Emit(s);
-          })
+      inputStream(&input),
+      outputStream(&output)
 {
 
     using namespace Stockfish;
@@ -24,12 +21,17 @@ EngineWrapper::EngineWrapper(
 
     char *argv[] =
         {
-            arg0};
+            arg0,
+            nullptr};
 
     engine =
         std::make_unique<UCIEngine>(
             1,
             argv);
+
+    engine->setStreams(
+        &inputStream,
+        &outputStream);
 }
 
 EngineWrapper::~EngineWrapper()
@@ -87,17 +89,11 @@ Napi::Object EngineWrapper::Init(
 Napi::Value EngineWrapper::Start(
     const Napi::CallbackInfo &info)
 {
-
     auto env = info.Env();
 
-    std::cin.rdbuf(
-        &input);
-
-    std::cout.rdbuf(
-        &output);
-
-    std::cerr.rdbuf(
-        &output);
+    engine->setStreams(
+        &inputStream,
+        &outputStream);
 
     engineThread =
         std::thread(
