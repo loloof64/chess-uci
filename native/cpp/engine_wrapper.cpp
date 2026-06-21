@@ -1,16 +1,17 @@
 #include "engine_wrapper.h"
 
-Napi::FunctionReference EngineWrapper::constructor;
+Napi::FunctionReference
+    EngineWrapper::constructor;
 
 Napi::Object EngineWrapper::Init(
     Napi::Env env,
     Napi::Object exports)
 {
 
-    auto clazz =
+    auto func =
         DefineClass(
             env,
-            "Stockfish",
+            "EngineWrapper",
             {
 
                 InstanceMethod(
@@ -32,89 +33,41 @@ Napi::Object EngineWrapper::Init(
             });
 
     constructor =
-        Napi::Persistent(clazz);
+        Napi::Persistent(func);
 
     constructor.SuppressDestruct();
 
     exports.Set(
-        "Stockfish",
-        clazz);
+        "EngineWrapper",
+        func);
 
     return exports;
 }
 
 EngineWrapper::EngineWrapper(
     const Napi::CallbackInfo &info)
-
-    : Napi::ObjectWrap<EngineWrapper>(info),
-
-      inputStream(&inputBuffer),
-
-      outputBuffer(
-          [this](const std::string &text)
-          {
-              Emit(text);
-          }),
-
-      outputStream(&outputBuffer)
+    : Napi::ObjectWrap<EngineWrapper>(info)
 {
 }
 
 EngineWrapper::~EngineWrapper()
 {
-
     if (runner)
-    {
-        inputBuffer.push(
-            "quit\n");
-    }
-
-    if (engineThread.joinable())
-    {
-        engineThread.join();
-    }
-
-    running = false;
-
-    if (callback)
-    {
-        callback.Release();
-    }
+        runner->stop();
 }
 
 Napi::Value EngineWrapper::Start(
     const Napi::CallbackInfo &info)
 {
 
-    auto env =
-        info.Env();
+    runner =
+        std::make_unique<StockfishRunner>(
+            std::cin,
+            std::cout);
 
-    if (running)
-        return env.Undefined();
+    runner->start();
 
-    running = true;
-
-    engineThread =
-        std::thread(
-            [this]()
-            {
-                runner =
-                    std::make_unique<
-                        StockfishRunner>(
-                        inputStream,
-                        outputStream);
-
-                runner->start();
-
-                if (runner)
-                {
-                    runner->stop();
-                }
-
-                running = false;
-            });
-
-    return env.Undefined();
+    return info.Env().Undefined();
 }
 
 Napi::Value EngineWrapper::Send(
@@ -124,13 +77,12 @@ Napi::Value EngineWrapper::Send(
     if (!runner)
         return info.Env().Undefined();
 
-    auto cmd =
+    std::string cmd =
         info[0]
             .As<Napi::String>()
             .Utf8Value();
 
-    inputBuffer.push(
-        cmd + "\n");
+    runner->send(cmd);
 
     return info.Env().Undefined();
 }
@@ -140,17 +92,7 @@ Napi::Value EngineWrapper::Stop(
 {
 
     if (runner)
-    {
-        inputBuffer.push(
-            "quit\n");
-    }
-
-    if (engineThread.joinable())
-    {
-        engineThread.join();
-    }
-
-    running = false;
+        runner->stop();
 
     return info.Env().Undefined();
 }
@@ -162,34 +104,10 @@ Napi::Value EngineWrapper::OnOutput(
     callback =
         Napi::ThreadSafeFunction::New(
             info.Env(),
-
-            info[0]
-                .As<Napi::Function>(),
-
-            "stockfish-output",
-
+            info[0].As<Napi::Function>(),
+            "stockfish",
             0,
-
             1);
 
     return info.Env().Undefined();
-}
-
-void EngineWrapper::Emit(
-    const std::string &text)
-{
-
-    if (!callback)
-        return;
-
-    callback.BlockingCall(
-        [text](
-            Napi::Env env,
-            Napi::Function fn)
-        {
-            fn.Call(
-                {Napi::String::New(
-                    env,
-                    text)});
-        });
 }

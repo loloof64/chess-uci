@@ -1,26 +1,15 @@
 const sf = require("./build/Release/stockfish.node");
 
-const e = new sf.Stockfish();
-
-e.onOutput((line) => {
-  console.log("SF>", line);
-});
+const e = new sf.EngineWrapper();
 
 e.start();
 
-setTimeout(() => {
-  e.send("uci");
-}, 500);
+e.send("uci");
 
 setTimeout(() => {
   e.send("isready");
-}, 1500);
-
-setTimeout(() => {
-  e.send("position startpos");
-  e.send("go depth 10");
-}, 2500);
+}, 1000);
 
 setTimeout(() => {
   e.send("quit");
-}, 10000);
+}, 3000);

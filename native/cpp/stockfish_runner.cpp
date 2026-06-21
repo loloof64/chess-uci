@@ -1,15 +1,10 @@
 #include "stockfish_runner.h"
 
-#include "stockfish/src/bitboard.h"
-#include "stockfish/src/position.h"
-#include "stockfish/src/tune.h"
-
 #include <iostream>
 
 StockfishRunner::StockfishRunner(
     std::istream &in,
     std::ostream &out)
-
     : input(in),
       output(out)
 {
@@ -31,15 +26,8 @@ void StockfishRunner::start()
         std::thread(
             [this]()
             {
-                //
-                // Same initialization as Stockfish main.cpp
-                //
-
-                Stockfish::Bitboards::init();
-
-                Stockfish::Position::init();
-
-                char arg0[] = "stockfish";
+                char arg0[] =
+                    "stockfish";
 
                 char *argv[] =
                     {
@@ -60,9 +48,6 @@ void StockfishRunner::start()
                         1,
                         argv);
 
-                /*Stockfish::Tune::init(
-                    engine->engine_options());*/
-
                 engine->loop();
 
                 std::cin.rdbuf(oldIn);
@@ -73,18 +58,26 @@ void StockfishRunner::start()
             });
 }
 
-void StockfishRunner::stop()
+void StockfishRunner::send(
+    const std::string &command)
 {
-
     if (!running)
         return;
 
-    //
-    // Do not use redirected cout here.
-    //
-    input.clear();
+    input.rdbuf()->sputn(
+        command.c_str(),
+        command.size());
 
-    engine.reset();
+    input.rdbuf()->sputc(
+        '\n');
+}
+
+void StockfishRunner::stop()
+{
+    if (!running)
+        return;
+
+    send("quit");
 
     if (thread.joinable())
         thread.join();

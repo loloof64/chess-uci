@@ -1,13 +1,9 @@
 #include "streambuf.h"
 
-void QueueStreamBuf::push(
-    const std::string &data)
+void QueueStreamBuf::push(const std::string &data)
 {
-
     {
-        std::lock_guard<std::mutex> lock(
-            mutex);
-
+        std::lock_guard<std::mutex> lock(mutex);
         queue.push(data);
     }
 
@@ -16,9 +12,7 @@ void QueueStreamBuf::push(
 
 int QueueStreamBuf::underflow()
 {
-
-    std::unique_lock<std::mutex> lock(
-        mutex);
+    std::unique_lock<std::mutex> lock(mutex);
 
     cv.wait(
         lock,
@@ -27,9 +21,7 @@ int QueueStreamBuf::underflow()
             return !queue.empty();
         });
 
-    current =
-        queue.front();
-
+    current = queue.front();
     queue.pop();
 
     setg(
@@ -37,37 +29,5 @@ int QueueStreamBuf::underflow()
         current.data(),
         current.data() + current.size());
 
-    return traits_type::to_int_type(
-        *gptr());
-}
-
-CallbackStreamBuf::CallbackStreamBuf(
-    Callback cb)
-
-    : callback(cb)
-{
-}
-
-int CallbackStreamBuf::overflow(
-    int ch)
-{
-
-    if (ch != EOF)
-        buffer +=
-            static_cast<char>(ch);
-
-    return ch;
-}
-
-int CallbackStreamBuf::sync()
-{
-
-    if (!buffer.empty())
-    {
-        callback(buffer);
-
-        buffer.clear();
-    }
-
-    return 0;
+    return traits_type::to_int_type(*gptr());
 }
