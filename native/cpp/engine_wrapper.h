@@ -5,22 +5,26 @@
 #include "stockfish_runner.h"
 
 
+
 class EngineWrapper :
-    public Napi::ObjectWrap<EngineWrapper>
+public Napi::ObjectWrap<EngineWrapper>
 {
 
 public:
 
     static Napi::Object Init(
-        Napi::Env env,
-        Napi::Object exports);
+        Napi::Env,
+        Napi::Object
+    );
 
 
     EngineWrapper(
-        const Napi::CallbackInfo& info);
+        const Napi::CallbackInfo&
+    );
 
 
     ~EngineWrapper();
+
 
 
 private:
@@ -29,20 +33,25 @@ private:
 
 
     Napi::Value Start(
-        const Napi::CallbackInfo& info);
+        const Napi::CallbackInfo&
+    );
 
 
     Napi::Value Send(
-        const Napi::CallbackInfo& info);
+        const Napi::CallbackInfo&
+    );
 
 
     Napi::Value Stop(
-        const Napi::CallbackInfo& info);
+        const Napi::CallbackInfo&
+    );
 
 
+private:
 
     std::unique_ptr<StockfishRunner> runner;
 
 
     Napi::ThreadSafeFunction callback;
+
 };

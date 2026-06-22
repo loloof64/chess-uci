@@ -1,57 +1,61 @@
 #pragma once
 
-#include <atomic>
 #include <thread>
+#include <atomic>
 #include <functional>
-#include <memory>
 #include <string>
+#include <memory>
 
-#include "streambuf.h"
+#include "stockfish/src/uci.h"
+#include "stockfish/src/bitboard.h"
+#include "stockfish/src/position.h"
 
-namespace Stockfish {
-class UCIEngine;
-}
 
 class StockfishRunner
 {
+
 public:
 
-    using OutputCallback =
+    using Callback =
         std::function<void(const std::string&)>;
 
 
-    StockfishRunner();
+    explicit StockfishRunner(
+        Callback cb
+    );
+
 
     ~StockfishRunner();
 
 
-    void start(OutputCallback cb);
-
-    void send(
-        const std::string& command);
+    void start();
 
 
     void stop();
 
 
+    void send(
+        const std::string& cmd
+    );
+
+
 private:
 
-    void run();
+    void loop();
 
 
 private:
 
-    std::atomic<bool> running{false};
+    Callback callback;
+
 
     std::thread thread;
 
 
-    std::unique_ptr<Stockfish::UCIEngine> engine;
+    std::atomic<bool> running{false};
 
 
-    QueueBuf inputBuffer;
-    QueueBuf outputBuffer;
+    std::unique_ptr<Stockfish::UCIEngine> uci;
 
 
-    OutputCallback callback;
 };

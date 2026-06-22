@@ -7,7 +7,7 @@
         "native/cpp/addon.cpp",
         "native/cpp/engine_wrapper.cpp",
         "native/cpp/stockfish_runner.cpp",
-        "native/cpp/streambuf.cpp",
+"native/cpp/stockfish_init.cpp",
 
         "native/cpp/stockfish/src/benchmark.cpp",
         "native/cpp/stockfish/src/bitboard.cpp",

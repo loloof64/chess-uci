@@ -1,19 +1,17 @@
 #include "stockfish_runner.h"
 
-
-#include "stockfish/src/bitboard.h"
-#include "stockfish/src/position.h"
-#include "stockfish/src/tune.h"
-#include "stockfish/src/uci.h"
-
-
 #include <iostream>
+#include <sstream>
 
 
-StockfishRunner::StockfishRunner()
+StockfishRunner::StockfishRunner(
+    Callback cb
+)
+:
+callback(cb)
 {
-}
 
+}
 
 
 StockfishRunner::~StockfishRunner()
@@ -23,15 +21,19 @@ StockfishRunner::~StockfishRunner()
 
 
 
-void StockfishRunner::start(
-    OutputCallback cb)
+void StockfishRunner::start()
 {
 
     if(running)
         return;
 
 
-    callback = cb;
+    // Same initialization as Stockfish main.cpp
+
+    Stockfish::Bitboards::init();
+
+    Stockfish::Position::init();
+
 
 
     running = true;
@@ -39,74 +41,71 @@ void StockfishRunner::start(
 
     thread =
         std::thread(
-            &StockfishRunner::run,
-            this);
-}
+            [this]()
+            {
+
+                int argc = 1;
+
+                char name[] = "stockfish";
+
+                char* argv[] =
+                {
+                    name,
+                    nullptr
+                };
 
 
-
-void StockfishRunner::run()
-{
-
-    char arg0[] = "stockfish";
-
-
-    char* argv[] =
-    {
-        arg0,
-        nullptr
-    };
+                uci =
+                    std::make_unique
+                    <
+                        Stockfish::UCIEngine
+                    >
+                    (
+                        argc,
+                        argv
+                    );
 
 
-    Stockfish::Bitboards::init();
+                while(running)
+                {
+                    std::this_thread::sleep_for(
+                        std::chrono::milliseconds(10)
+                    );
+                }
 
-    Stockfish::Position::init();
+            }
+        );
 
-
-    engine =
-        std::make_unique<
-            Stockfish::UCIEngine>(
-                1,
-                argv);
-
-
-
-    Stockfish::Tune::init(
-        engine->engine_options());
-
-
-
-    auto oldIn =
-        std::cin.rdbuf(
-            &inputBuffer);
-
-
-    auto oldOut =
-        std::cout.rdbuf(
-            &outputBuffer);
-
-
-
-    engine->loop();
-
-
-
-    std::cin.rdbuf(oldIn);
-
-    std::cout.rdbuf(oldOut);
-
-
-
-    running=false;
 }
 
 
 
 void StockfishRunner::send(
-    const std::string& command)
+    const std::string& cmd
+)
 {
 
-    inputBuffer.push(command);
+    /*
+       For now just expose commands.
+       The proper way is to redirect
+       stdin/stdout like real UCI.
+    */
+
+
+    if(cmd=="quit")
+    {
+        stop();
+        return;
+    }
+
+
+    if(callback)
+    {
+        callback(
+            "received: " + cmd
+        );
+    }
+
 }
 
 
@@ -114,16 +113,13 @@ void StockfishRunner::send(
 void StockfishRunner::stop()
 {
 
-    if(!running)
-        return;
-
-
-    send("quit");
+    running=false;
 
 
     if(thread.joinable())
         thread.join();
 
 
-    running=false;
-}   
+    uci.reset();
+
+}
