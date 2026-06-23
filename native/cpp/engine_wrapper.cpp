@@ -68,18 +68,18 @@ Napi::ObjectWrap<EngineWrapper>(info)
 
 EngineWrapper::~EngineWrapper()
 {
+    std::cout
+        << "[wrapper] destructor"
+        << std::endl;
+
+
     if(runner)
         runner->stop();
 
 
     if(callback)
         callback.Release();
-
 }
-
-
-
-
 
 Napi::Value EngineWrapper::Start(
     const Napi::CallbackInfo& info
@@ -192,11 +192,35 @@ Napi::Value EngineWrapper::Stop(
     const Napi::CallbackInfo& info
 )
 {
+    auto env = info.Env();
+
+    std::cout
+        << "[wrapper] Stop() called"
+        << std::endl;
+
 
     if(runner)
+    {
         runner->stop();
+        runner.reset();
+    }
 
 
-    return info.Env().Undefined();
+    if(callback)
+    {
+        std::cout
+            << "[wrapper] callback release"
+            << std::endl;
 
+        callback.Release();
+        callback = {};
+    }
+
+
+    std::cout
+        << "[wrapper] Stop() finished"
+        << std::endl;
+
+
+    return env.Undefined();
 }

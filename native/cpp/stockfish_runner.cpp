@@ -40,46 +40,53 @@ void StockfishRunner::start()
 
 
     thread =
-        std::thread(
-        [this]()
+    std::thread(
+    [this]()
+    {
+        std::cerr << "[thread] started\n";
+
+        int argc = 1;
+
+        char name[]="stockfish";
+
+        char* argv[] =
         {
-
-            int argc = 1;
-
-
-            char name[]="stockfish";
+            name,
+            nullptr
+        };
 
 
-            char* argv[] =
-            {
-                name,
-                nullptr
-            };
-
-
-            uci =
+        uci =
             std::make_unique<Stockfish::UCIEngine>(
                 argc,
                 argv
             );
 
-            uci->setOutputCallback(
-                [this](std::string s)
-                {
-                    if(callback)
-                        callback(s);
-                });
+        std::cerr << "[thread] uci created\n";
 
 
-            uci->setStreams(
-                input.get(),
-                nullptr
-            );
+        uci->setOutputCallback(
+            [this](std::string s)
+            {
+                std::cerr << "[SF] " << s << "\n";
+
+                if(callback)
+                    callback(s);
+            });
 
 
-            uci->loop();
+        uci->setStreams(
+            input.get(),
+            nullptr
+        );
 
-        });
+
+        std::cerr << "[thread] entering loop\n";
+
+        uci->loop();
+
+        std::cerr << "[thread] loop ended\n";
+    });
 }
 
 
@@ -99,14 +106,26 @@ void StockfishRunner::send(
 
 void StockfishRunner::stop()
 {
+    std::cerr << "[runner] stop() begin\n";
 
-    inputBuffer.close();
+    send("stop");
+    std::cerr << "[runner] sent stop\n";
 
+    send("quit");
+    std::cerr << "[runner] sent quit\n";
 
     if(thread.joinable())
+    {
+        std::cerr << "[runner] waiting thread join...\n";
         thread.join();
+        std::cerr << "[runner] thread joined\n";
+    }
 
+    std::cerr << "[runner] reset uci\n";
 
     uci.reset();
 
+    running = false;
+
+    std::cerr << "[runner] stop() end\n";
 }
