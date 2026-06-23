@@ -1,19 +1,18 @@
-#pragma once
+#ifndef STOCKFISH_RUNNER_H
+#define STOCKFISH_RUNNER_H
 
 #include <atomic>
-#include <functional>
+#include <thread>
 #include <memory>
-#include <mutex>
-#include <queue>
 #include <sstream>
 #include <string>
-#include <thread>
+#include <istream>
+#include <mutex>
 #include <condition_variable>
+#include <queue>
 
-#include "stockfish/src/uci.h"
-#include "stockfish/src/bitboard.h"
-#include "stockfish/src/position.h"
-
+#include "queue_stream.h"
+#include "uci.h"
 
 class StockfishRunner
 {
@@ -23,7 +22,7 @@ public:
         std::function<void(const std::string&)>;
 
 
-    explicit StockfishRunner(
+    StockfishRunner(
         Callback cb
     );
 
@@ -33,18 +32,12 @@ public:
 
     void start();
 
-
-    void stop();
-
-
     void send(
         const std::string& cmd
     );
 
 
-private:
-
-    void outputLoop();
+    void stop();
 
 
 private:
@@ -52,23 +45,26 @@ private:
     Callback callback;
 
 
-    std::thread engineThread;
-    std::thread readerThread;
-
-
     std::atomic<bool> running{false};
+
+
+    std::thread thread;
+
+    QueueStreamBuf inputBuffer;
+
+
+    std::unique_ptr<std::istream> input;
+
 
 
     std::unique_ptr<Stockfish::UCIEngine> uci;
 
-
-    std::unique_ptr<std::stringstream> input;
-    std::unique_ptr<std::stringstream> output;
-
-
-    std::mutex inputMutex;
-    std::condition_variable inputCondition;
-
-
     std::mutex outputMutex;
+
+    std::condition_variable outputCondition;
+
+    std::queue<std::string> outputs;
+
 };
+
+#endif

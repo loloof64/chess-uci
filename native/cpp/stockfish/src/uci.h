@@ -1,11 +1,13 @@
 #ifndef UCI_H_INCLUDED
 #define UCI_H_INCLUDED
 
-#include <iostream>
+#include <cstdint>
+#include <istream>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <cstdint>
+
 
 #include "engine.h"
 #include "search.h"
@@ -18,13 +20,16 @@ class Position;
 class Move;
 class Score;
 
+
 enum Square : uint8_t;
+
 
 using Value = int;
 
 
 class UCIEngine
 {
+
 public:
 
     UCIEngine(
@@ -32,20 +37,41 @@ public:
         char **argv
     );
 
+   
+    void setOutputCallback(
+        std::function<void(std::string)> cb
+    );
 
-    static UCIEngine &active();
+
+    //
+    // Classic UCI loop mode
+    //
+    void loop();
 
 
-    static std::ostream &active_output();
+    //
+    // Direct command execution mode
+    // Used by node addon
+    //
+    void execute(
+        const std::string& cmd
+    );
 
 
+    //
+    // Get pending output
+    //
+    std::string takeOutput();
+
+
+    //
+    // Optional streams
+    //
     void setStreams(
         std::istream *in,
         std::ostream *out
     );
 
-
-    void loop();
 
 
     static int to_cp(
@@ -108,19 +134,34 @@ private:
     CommandLine cli;
 
 
+
     //
-    // Active UCI instance for the current thread
+    // Current UCI instance per thread
     //
     static thread_local UCIEngine *current;
 
 
 
     //
-    // Instance-specific streams
+    // Input
     //
     std::istream *inputStream = nullptr;
 
-    std::ostream *outputStream = &std::cout;
+
+
+    //
+    // Output destination
+    //
+    std::ostream *outputStream = nullptr;
+
+
+
+    //
+    // Private buffer
+    //
+    std::ostringstream internalOutput;
+
+    std::function<void(std::string)> outputCallback;
 
 
 
@@ -159,6 +200,7 @@ private:
     );
 
 
+
     void on_update_no_moves(
         const Engine::InfoShort &info
     );
@@ -181,12 +223,11 @@ private:
     );
 
 
+
     void init_search_update_listeners();
 
 };
 
-
-} // namespace Stockfish
-
+}
 
 #endif
