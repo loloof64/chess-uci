@@ -58,20 +58,22 @@ namespace Stockfish
     overload(Ts...) -> overload<Ts...>;
 
     void UCIEngine::print_info_string(std::string_view str)
+{
+    auto& out = active_output();
+
+    for (auto &line : split(str, "\n"))
     {
-        sync_cout_start();
-        for (auto &line : split(str, "\n"))
+        if (!is_whitespace(line))
         {
-            if (!is_whitespace(line))
-            {
-                (*outputStream) << "info string " << line << '\n'
-                                << '\n'
-                                << std::flush;
-                ;
-            }
+            out
+                << "info string "
+                << line
+                << '\n'
+                << '\n'
+                << std::flush;
         }
-        sync_cout_end();
     }
+}
 
     UCIEngine::UCIEngine(int argc, char **argv) : engine(argv[0]),
                                                   cli(argc, argv)
@@ -104,8 +106,9 @@ namespace Stockfish
     {
         current = this;
 
-        std::string token, cmd;
+        current_output = outputStream;
 
+        std::string token, cmd;
         for (int i = 1; i < cli.argc; ++i)
             cmd += std::string(cli.argv[i]) + " ";
 
@@ -127,7 +130,7 @@ namespace Stockfish
 
             else if (token == "uci")
             {
-                std::cout << "id name " << engine_info(true) << "\n"
+                (*outputStream) << "id name " << engine_info(true) << "\n"
                           << engine.get_options() << '\n'
                           << "uciok\n"
                           << std::flush;
@@ -151,7 +154,7 @@ namespace Stockfish
 
             else if (token == "isready")
             {
-                std::cout << "readyok\n"
+                (*outputStream) << "readyok\n"
                           << std::flush;
             }
 
@@ -165,14 +168,14 @@ namespace Stockfish
                 benchmark(is);
 
             else if (token == "d")
-                std::cout << engine.visualize() << '\n'
+                (*outputStream) << engine.visualize() << '\n'
                           << std::flush;
 
             else if (token == "eval")
                 engine.trace_eval();
 
             else if (token == "compiler")
-                std::cout << compiler_info() << '\n'
+                (*outputStream) << compiler_info() << '\n'
                           << std::flush;
 
             else if (token == "export_net")
@@ -487,8 +490,13 @@ namespace Stockfish
     std::uint64_t UCIEngine::perft(const Search::LimitsType &limits)
     {
         auto nodes = engine.perft(engine.fen(), limits.perft, engine.get_options()["UCI_Chess960"]);
-        sync_cout << "\nNodes searched: " << nodes << "\n"
-                  << sync_endl;
+        auto& out = active_output();
+
+        out
+            << "\nNodes searched: "
+            << nodes
+            << "\n"
+            << std::flush;
         return nodes;
     }
 
@@ -651,9 +659,18 @@ namespace Stockfish
         return Move::none();
     }
 
-    void UCIEngine::on_update_no_moves(const Engine::InfoShort &info)
+    void UCIEngine::on_update_no_moves(
+        const Engine::InfoShort &info)
     {
-        sync_cout << "info depth " << info.depth << " score " << format_score(info.score) << sync_endl;
+        auto& out = active_output();
+
+        out
+            << "info depth "
+            << info.depth
+            << " score "
+            << format_score(info.score)
+            << '\n'
+            << std::flush;
     }
 
     void UCIEngine::on_update_full(const Engine::InfoFull &info, bool showWDL)
@@ -679,7 +696,12 @@ namespace Stockfish
            << " time " << info.timeMs       //
            << " pv " << info.pv;            //
 
-        sync_cout << ss.str() << sync_endl;
+        auto& out = active_output();
+
+        out
+            << ss.str()
+            << '\n'
+            << std::flush;
     }
 
     void UCIEngine::on_iter(const Engine::InfoIter &info)
@@ -691,15 +713,32 @@ namespace Stockfish
            << " currmove " << info.currmove              //
            << " currmovenumber " << info.currmovenumber; //
 
-        sync_cout << ss.str() << sync_endl;
+        auto& out = active_output();
+
+        out
+            << ss.str()
+            << '\n'
+            << std::flush;
     }
 
-    void UCIEngine::on_bestmove(std::string_view bestmove, std::string_view ponder)
+   void UCIEngine::on_bestmove(
+        std::string_view bestmove,
+        std::string_view ponder)
     {
-        sync_cout << "bestmove " << bestmove;
-        if (!ponder.empty())
-            std::cout << " ponder " << ponder;
-        std::cout << sync_endl;
+        auto& out = active_output();
+
+        out
+            << "bestmove "
+            << bestmove;
+
+        if(!ponder.empty())
+            out
+                << " ponder "
+                << ponder;
+
+        out
+            << '\n'
+            << std::flush;
     }
 
     void UCIEngine::setStreams(
@@ -710,11 +749,13 @@ namespace Stockfish
         outputStream = out;
     }
 
+
+
     std::ostream &UCIEngine::active_output()
     {
-        if (current)
+        if(current)
             return *current->outputStream;
 
-        return *current->outputStream;
+        return std::cout;
     }
 } // namespace Stockfish

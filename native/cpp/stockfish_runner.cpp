@@ -1,7 +1,6 @@
 #include "stockfish_runner.h"
 
-#include <iostream>
-#include <sstream>
+#include <chrono>
 
 
 StockfishRunner::StockfishRunner(
@@ -23,23 +22,28 @@ StockfishRunner::~StockfishRunner()
 
 void StockfishRunner::start()
 {
-
     if(running)
         return;
 
 
-    // Same initialization as Stockfish main.cpp
-
+    // Initialize Stockfish global structures once
     Stockfish::Bitboards::init();
-
     Stockfish::Position::init();
 
+
+    input =
+        std::make_unique<std::stringstream>();
+
+
+    output =
+        std::make_unique<std::stringstream>();
 
 
     running = true;
 
 
-    thread =
+
+    engineThread =
         std::thread(
             [this]()
             {
@@ -56,26 +60,68 @@ void StockfishRunner::start()
 
 
                 uci =
-                    std::make_unique
-                    <
-                        Stockfish::UCIEngine
-                    >
-                    (
+                    std::make_unique<Stockfish::UCIEngine>(
                         argc,
                         argv
                     );
 
 
-                while(running)
-                {
-                    std::this_thread::sleep_for(
-                        std::chrono::milliseconds(10)
-                    );
-                }
+                uci->setStreams(
+                    input.get(),
+                    output.get()
+                );
+
+
+                // UCIEngine owns the command loop
+                uci->loop();
+
 
             }
         );
 
+
+
+    readerThread =
+        std::thread(
+            [this]()
+            {
+                while(running)
+                {
+
+                    std::string data;
+
+
+                    {
+                        std::lock_guard<std::mutex> lock(
+                            outputMutex
+                        );
+
+
+                        data =
+                            output->str();
+
+
+                        if(!data.empty())
+                        {
+                            output->str("");
+                            output->clear();
+                        }
+                    }
+
+
+
+                    if(!data.empty() && callback)
+                    {
+                        callback(data);
+                    }
+
+
+                    std::this_thread::sleep_for(
+                        std::chrono::milliseconds(10)
+                    );
+                }
+            }
+        );
 }
 
 
@@ -85,41 +131,50 @@ void StockfishRunner::send(
 )
 {
 
-    /*
-       For now just expose commands.
-       The proper way is to redirect
-       stdin/stdout like real UCI.
-    */
-
-
-    if(cmd=="quit")
     {
-        stop();
-        return;
-    }
-
-
-    if(callback)
-    {
-        callback(
-            "received: " + cmd
+        std::lock_guard<std::mutex> lock(
+            inputMutex
         );
+
+
+        (*input)
+            << cmd
+            << '\n';
     }
+
+
+    inputCondition.notify_one();
 
 }
-
+    
 
 
 void StockfishRunner::stop()
 {
 
-    running=false;
+    if(!running)
+        return;
 
 
-    if(thread.joinable())
-        thread.join();
+    send("quit");
+
+
+    running = false;
+
+
+
+    if(engineThread.joinable())
+        engineThread.join();
+
+
+    if(readerThread.joinable())
+        readerThread.join();
+
 
 
     uci.reset();
+
+    input.reset();
+    output.reset();
 
 }

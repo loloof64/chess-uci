@@ -1,10 +1,14 @@
 #pragma once
 
-#include <thread>
 #include <atomic>
 #include <functional>
-#include <string>
 #include <memory>
+#include <mutex>
+#include <queue>
+#include <sstream>
+#include <string>
+#include <thread>
+#include <condition_variable>
 
 #include "stockfish/src/uci.h"
 #include "stockfish/src/bitboard.h"
@@ -13,7 +17,6 @@
 
 class StockfishRunner
 {
-
 public:
 
     using Callback =
@@ -41,7 +44,7 @@ public:
 
 private:
 
-    void loop();
+    void outputLoop();
 
 
 private:
@@ -49,7 +52,8 @@ private:
     Callback callback;
 
 
-    std::thread thread;
+    std::thread engineThread;
+    std::thread readerThread;
 
 
     std::atomic<bool> running{false};
@@ -58,4 +62,13 @@ private:
     std::unique_ptr<Stockfish::UCIEngine> uci;
 
 
+    std::unique_ptr<std::stringstream> input;
+    std::unique_ptr<std::stringstream> output;
+
+
+    std::mutex inputMutex;
+    std::condition_variable inputCondition;
+
+
+    std::mutex outputMutex;
 };
