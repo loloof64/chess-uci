@@ -42,10 +42,11 @@ public:
 
 private:
 
-    Callback callback;
-
+    std::atomic<bool> stopping{false};
 
     std::atomic<bool> running{false};
+
+    Callback callback;
 
 
     std::thread thread;

@@ -106,26 +106,18 @@ void StockfishRunner::send(
 
 void StockfishRunner::stop()
 {
-    std::cerr << "[runner] stop() begin\n";
+    if (stopping.exchange(true))
+        return;
+
+    std::cout << "[runner] stop() begin" << std::endl;
 
     send("stop");
-    std::cerr << "[runner] sent stop\n";
-
     send("quit");
-    std::cerr << "[runner] sent quit\n";
 
-    if(thread.joinable())
-    {
-        std::cerr << "[runner] waiting thread join...\n";
+    if (thread.joinable())
         thread.join();
-        std::cerr << "[runner] thread joined\n";
-    }
-
-    std::cerr << "[runner] reset uci\n";
-
-    uci.reset();
 
     running = false;
 
-    std::cerr << "[runner] stop() end\n";
+    std::cout << "[runner] stop() end" << std::endl;
 }
