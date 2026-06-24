@@ -31,6 +31,8 @@ private:
 
     static Napi::FunctionReference constructor;
 
+    bool stopped = false;
+
 
     Napi::Value Start(
         const Napi::CallbackInfo&
@@ -47,11 +49,11 @@ private:
     );
 
 
-private:
-
     std::unique_ptr<StockfishRunner> runner;
 
 
     Napi::ThreadSafeFunction callback;
+
+    void stopInternal();
 
 };
