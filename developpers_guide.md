@@ -12,6 +12,8 @@
 
 #### Compilation
 
-1. make the **scripts/build_stockfish.sh** executable if you're on linux : `chmod +x scripts/build_stockfish.sh`
-2. run `.\scripts\build-stockfish.ps1 bmi2` in project root on Windows for a compilation for architecture bmi2, `./scripts/build-stockfish.sh bmi2` on Ubuntu for a compilation for architecture bmi2.
-   You can change target architecture(bmi2, avx, avx2, generic).
+* Available processors : generic (default) / avx / avx2 / bmi2
+
+* Examples : 
+`bun run scripts/build.ts --cpu=avx2`(dev mode/ avx2 processors)
+`bun run build --release --cpu=avx2` (release mode / avx2 processors)

@@ -1,26 +1,57 @@
-// RPC type definitions for main process <-> webview communication
-// This file defines the contract for typed RPC between Electrobun main and webview
+// shared/rpc.ts
 
 import type { RPCSchema } from "electrobun";
 
-export type MainRPC = {
-	bun: RPCSchema<{
-		requests: {
-			ping: {
-				params: Record<string, never>;
-				response: string;
-			};
-			getGreeting: {
-				params: Record<string, never>;
-				response: string;
-			};
-		};
-		messages: {
-			log: { msg: string };
-		};
-	}>;
-	webview: RPCSchema<{
-		requests: Record<string, never>;
-		messages: Record<string, never>;
-	}>;
-};
+
+export type MainRPC = RPCSchema<{
+    requests: {
+
+        createEngine: {
+            params: Record<string, never>;
+            response: number;
+        };
+
+
+        sendEngineCommand: {
+            params: {
+                id:number;
+                command:string;
+            };
+
+            response:void;
+        };
+
+
+        releaseEngine: {
+            params:{
+                id:number;
+            };
+
+            response:void;
+        };
+
+    };
+
+
+    messages: {
+
+        log:{
+            msg:string;
+        };
+
+
+        engineOutput:{
+            id:number;
+            line:string;
+        };
+
+    };
+}>;
+
+
+
+export type WebviewRPC = RPCSchema<{
+    requests: Record<string, never>;
+
+    messages: Record<string, never>;
+}>;
