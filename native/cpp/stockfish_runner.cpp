@@ -66,13 +66,18 @@ void StockfishRunner::start()
 
 
         uci->setOutputCallback(
-            [this](std::string s)
-            {
-                std::cerr << "[SF] " << s << "\n";
+        [this](std::string s)
+        {
+            std::cerr << "[SF] " << s << "\n";
 
-                if(callback)
-                    callback(s);
-            });
+
+            if (stopping)
+                return;
+
+
+            if(callback)
+                callback(s);
+        });
 
 
         uci->setStreams(
@@ -109,10 +114,15 @@ void StockfishRunner::stop()
     if (stopping.exchange(true))
         return;
 
+    suppressOutput = true;
+
     std::cout << "[runner] stop() begin" << std::endl;
 
-    send("stop");
-    send("quit");
+    if (running)
+    {
+        send("stop");
+        send("quit");
+    }
 
     if (thread.joinable())
         thread.join();

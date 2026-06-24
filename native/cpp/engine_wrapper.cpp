@@ -109,43 +109,40 @@ Napi::Value EngineWrapper::Start(
 
 
     runner =
-        std::make_unique<StockfishRunner>(
-            [this](const std::string& line)
-            {
-
-                auto* txt =
-                    new std::string(line);
-
+    std::make_unique<StockfishRunner>(
+        [this](const std::string& line)
+        {
+            if (stopped)
+                return;
 
 
-                callback.NonBlockingCall(
-                    txt,
-                    []
-                    (
-                        Napi::Env env,
-                        Napi::Function fn,
-                        std::string* value
-                    )
-                    {
+            auto* txt =
+                new std::string(line);
 
-                        fn.Call(
-                            {
-                              Napi::String::New(
+
+            callback.NonBlockingCall(
+                txt,
+                []
+                (
+                    Napi::Env env,
+                    Napi::Function fn,
+                    std::string* value
+                )
+                {
+                    fn.Call(
+                        {
+                            Napi::String::New(
                                 env,
                                 *value
-                              )
-                            }
-                        );
+                            )
+                        }
+                    );
 
-
-                        delete value;
-
-                    }
-                );
-
-
-            }
-        );
+                    delete value;
+                }
+            );
+        }
+    );
 
 
 

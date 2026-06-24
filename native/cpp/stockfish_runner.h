@@ -46,6 +46,8 @@ private:
 
     std::atomic<bool> running{false};
 
+    std::atomic<bool> suppressOutput{false};
+
     Callback callback;
 
 
