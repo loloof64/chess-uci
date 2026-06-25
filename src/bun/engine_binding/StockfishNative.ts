@@ -1,51 +1,78 @@
-export type OutputCallback =
-    (line:string)=>void;
+// src/bun/engine_binding/StockfishNative.ts
+
+import path from "node:path";
+import fs from "node:fs";
+
+
+function loadNativeAddon()
+{
+    const root =
+        path.resolve(
+            process.cwd(),
+            "../../../../"
+        );
+
+
+    const addonPath =
+        path.join(
+            root,
+            "native/linux-generic",
+            "stockfish.node"
+        );
+
+
+    if(!fs.existsSync(addonPath))
+    {
+        throw new Error(
+            "Missing addon " + addonPath
+        );
+    }
+
+
+    return require(addonPath);
+}
+
+
+
+const addon =
+    loadNativeAddon();
 
 
 
 export class StockfishNative
 {
-    private wrapper:any;
+    private engine:any;
 
 
     constructor()
     {
-        const addon =
-            require(
-                "../../../build/Release/stockfish.node"
-            );
-
-
-        this.wrapper =
+        this.engine =
             new addon.EngineWrapper();
     }
 
 
-
     start(
-        callback:OutputCallback
+        callback:(line:string)=>void
     )
     {
-        this.wrapper.start(
+        this.engine.start(
             callback
         );
     }
-
 
 
     send(
         command:string
     )
     {
-        this.wrapper.send(
+        this.engine.send(
             command
         );
     }
 
 
-
     stop()
     {
-        this.wrapper.stop();
+        this.engine.stop();
     }
 }

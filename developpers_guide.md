@@ -13,6 +13,7 @@
 #### Compilation
 
 * Available processors : generic (default) / avx / avx2 / bmi2
+* Targets : debug (default) / release
 
 * Examples : 
 `bun run scripts/build.ts --cpu=avx2`(dev mode/ avx2 processors)

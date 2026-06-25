@@ -6,79 +6,20 @@ import {
 
 import type { MainRPC } from "shared/rpc";
 
-import path from "node:path";
-import fs from "node:fs";
 import { EngineService } from "./services/EngineService";
-
-
-export function loadNativeAddon(
-    name:string
-)
-{
-    const projectRoot =
-        path.resolve(
-            process.cwd(),
-            "../../../../"
-        );
-
-
-    const candidates = [
-        path.join(
-            projectRoot,
-            "native/linux-generic",
-            `${name}.node`
-        ),
-
-        path.join(
-            projectRoot,
-            "bin/native",
-            `${name}.node`
-        ),
-    ];
-
-
-    for(
-        const candidate of candidates
-    )
-    {
-        console.log(
-            "Trying:",
-            candidate
-        );
-
-
-        if(fs.existsSync(candidate))
-        {
-            console.log(
-                "Loading:",
-                candidate
-            );
-
-            return require(candidate);
-        }
-    }
-
-
-    throw new Error(
-        "Native addon missing:\n" +
-        candidates.join("\n")
-    );
-}
-
-
-// Keep addon loading available for StockfishNative
-loadNativeAddon("stockfish");
 
 
 
 // Engine layer
+
 const engineService =
     new EngineService();
 
 
 
 // HMR: use Vite dev server if running
-async function getMainViewUrl():Promise<string>
+
+async function getMainViewUrl(): Promise<string>
 {
     try
     {
@@ -105,6 +46,7 @@ async function getMainViewUrl():Promise<string>
 
 
 // Application menu
+
 ApplicationMenu.setApplicationMenu([
     {
         submenu:[
@@ -129,33 +71,17 @@ ApplicationMenu.setApplicationMenu([
         label:"Edit",
 
         submenu:[
-            {
-                role:"undo"
-            },
-
-            {
-                role:"redo"
-            },
+            { role:"undo" },
+            { role:"redo" },
 
             {
                 type:"separator"
             },
 
-            {
-                role:"cut"
-            },
-
-            {
-                role:"copy"
-            },
-
-            {
-                role:"paste"
-            },
-
-            {
-                role:"selectAll"
-            },
+            { role:"cut" },
+            { role:"copy" },
+            { role:"paste" },
+            { role:"selectAll" },
         ],
     },
 ]);
@@ -163,10 +89,8 @@ ApplicationMenu.setApplicationMenu([
 
 
 // RPC
-let mainRPC:any;
 
-
-mainRPC =
+const mainRPC =
     BrowserView.defineRPC<MainRPC>({
         maxRequestTime:5000,
 
@@ -175,23 +99,15 @@ mainRPC =
 
             requests:{
 
-                ping:() =>
+                createEngine: () =>
                 {
-                    return "pong";
-                },
+                    console.log(
+                        "RPC createEngine called"
+                    );
 
-
-                getGreeting:() =>
-                {
-                    return "Greetings from the Bun side!";
-                },
-
-
-                createEngine:() =>
-                {
                     const id =
                         engineService.create(
-                            (line) =>
+                            line =>
                             {
                                 console.log(
                                     "[ENGINE]",
@@ -199,7 +115,6 @@ mainRPC =
                                 );
                             }
                         );
-
 
                     return id;
                 },
@@ -255,6 +170,7 @@ mainRPC =
 
 
 // Create main window
+
 const mainWindow =
     new BrowserWindow({
         title:"chess-uci",
@@ -275,6 +191,7 @@ const mainWindow =
 
 
 // Events
+
 mainWindow.on(
     "close",
     () =>
@@ -288,6 +205,7 @@ mainWindow.on(
 );
 
 
+
 mainWindow.webview.on(
     "dom-ready",
     () =>
@@ -297,6 +215,7 @@ mainWindow.webview.on(
         );
     }
 );
+
 
 
 console.log(

@@ -49,7 +49,7 @@ if(mode === "dev")
 
 
     await Bun.$`
-        electrobun dev --watch
+        concurrently "bun run hmr" "bun run start"
     `;
 }
 else
