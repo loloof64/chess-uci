@@ -23,7 +23,7 @@ export function MainToolbar({addEngineCb}: MainToolbarProps) {
         const engineId = await electrobun.rpc?.request.createEngine();
         console.log("engineId", engineId)
         addEngineCb(engineId);
-        await electrobun.rpc?.request.sendEngineCommand(engineId, "uci")
+        await electrobun.rpc?.request.sendEngineCommand({id: engineId, command: "uci"})
         }, [addEngineCb])
 
     return (

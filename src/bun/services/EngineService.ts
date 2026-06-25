@@ -1,8 +1,4 @@
-import {
-    EnginePool,
-    EngineId
-} from "../engine/EnginePool";
-
+import { EnginePool } from "../engine/EnginePool";
 
 export class EngineService
 {
@@ -10,30 +6,21 @@ export class EngineService
         new EnginePool();
 
 
-
-    create()
+    create(
+        output:(id:number, line:string)=>void
+    )
     {
         const id =
             this.pool.create(
-                line =>
-                {
-                    // TODO: broadcast RPC
-                    console.log(
-                        "[engine]",
-                        id,
-                        line
-                    );
-                }
+                output
             );
-
 
         return id;
     }
 
 
-
     send(
-        id:EngineId,
+        id:number,
         command:string
     )
     {
@@ -43,9 +30,8 @@ export class EngineService
     }
 
 
-
     release(
-        id:EngineId
+        id:number
     )
     {
         this.pool.release(id);

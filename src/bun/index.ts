@@ -127,6 +127,13 @@ const mainRPC =
                     command
                 }) =>
                 {
+                    console.log(
+                        "RPC sendEngineCommand",
+                        id,
+                        command
+                    );
+
+
                     engineService.send(
                         id,
                         command
