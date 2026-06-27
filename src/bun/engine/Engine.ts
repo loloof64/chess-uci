@@ -1,48 +1,30 @@
 import { StockfishNative } from "../engine_binding/StockfishNative";
 
+export class Engine {
+  constructor(
+    private native: StockfishNative,
+    private output: (line: string) => void,
+  ) {}
 
-export class Engine
-{
-    constructor(
-        private native:StockfishNative,
-        private output:(line:string)=>void
-    )
-    {
-    }
+  start() {
+    this.native.start(this.output);
+  }
 
+  send(command: string) {
+    console.log("Engine.send", command);
 
-    start()
-    {
-        this.native.start(
-            this.output
-        );
-    }
+    this.native.send(command);
+  }
 
+  stop() {
+    this.native.stop();
+  }
 
-    send(
-        command:string
-    )
-    {
-        this.native.send(
-            command
-        );
-    }
+  uci() {
+    this.send("uci");
+  }
 
-
-    stop()
-    {
-        this.native.stop();
-    }
-
-
-    uci()
-    {
-        this.send("uci");
-    }
-
-
-    ready()
-    {
-        this.send("isready");
-    }
+  ready() {
+    this.send("isready");
+  }
 }

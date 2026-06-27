@@ -3,76 +3,38 @@
 import path from "node:path";
 import fs from "node:fs";
 
+function loadNativeAddon() {
+  const root = path.resolve(process.cwd(), "../../../../");
 
-function loadNativeAddon()
-{
-    const root =
-        path.resolve(
-            process.cwd(),
-            "../../../../"
-        );
+  const addonPath = path.join(root, "native/linux-generic", "stockfish.node");
 
+  if (!fs.existsSync(addonPath)) {
+    throw new Error("Missing addon " + addonPath);
+  }
 
-    const addonPath =
-        path.join(
-            root,
-            "native/linux-generic",
-            "stockfish.node"
-        );
-
-
-    if(!fs.existsSync(addonPath))
-    {
-        throw new Error(
-            "Missing addon " + addonPath
-        );
-    }
-
-
-    return require(addonPath);
+  return require(addonPath);
 }
 
+const addon = loadNativeAddon();
 
+export class StockfishNative {
+  private engine: any;
 
-const addon =
-    loadNativeAddon();
+  constructor() {
+    this.engine = new addon.EngineWrapper();
+  }
 
+  start(callback: (line: string) => void) {
+    this.engine.start(callback);
+  }
 
+  send(command: string) {
+    console.log("StockfishNative.send", command);
 
-export class StockfishNative
-{
-    private engine:any;
+    this.engine.send(command);
+  }
 
-
-    constructor()
-    {
-        this.engine =
-            new addon.EngineWrapper();
-    }
-
-
-    start(
-        callback:(line:string)=>void
-    )
-    {
-        this.engine.start(
-            callback
-        );
-    }
-
-
-    send(
-        command:string
-    )
-    {
-        this.engine.send(
-            command
-        );
-    }
-
-
-    stop()
-    {
-        this.engine.stop();
-    }
+  stop() {
+    this.engine.stop();
+  }
 }

@@ -68,7 +68,7 @@ namespace Stockfish
                     "info string " +
                     std::string(line);
 
-                if(outputCallback)
+                if (outputCallback)
                     outputCallback(msg);
             }
         }
@@ -88,8 +88,7 @@ namespace Stockfish
     }
 
     void UCIEngine::setOutputCallback(
-        std::function<void(std::string)> cb
-    )
+        std::function<void(std::string)> cb)
     {
         outputCallback = cb;
     }
@@ -112,7 +111,11 @@ namespace Stockfish
     void UCIEngine::loop()
     {
         current = this;
-        outputStream = &internalOutput;
+
+        if (!outputStream)
+        {
+            outputStream = &internalOutput;
+        }
 
         current_output = outputStream;
 
@@ -139,9 +142,9 @@ namespace Stockfish
             else if (token == "uci")
             {
                 (*outputStream) << "id name " << engine_info(true) << "\n"
-                          << engine.get_options() << '\n'
-                          << "uciok\n"
-                          << std::flush;
+                                << engine.get_options() << '\n'
+                                << "uciok\n"
+                                << std::flush;
             }
 
             else if (token == "setoption")
@@ -163,7 +166,7 @@ namespace Stockfish
             else if (token == "isready")
             {
                 (*outputStream) << "readyok\n"
-                          << std::flush;
+                                << std::flush;
             }
 
             else if (token == "flip")
@@ -177,14 +180,14 @@ namespace Stockfish
 
             else if (token == "d")
                 (*outputStream) << engine.visualize() << '\n'
-                          << std::flush;
+                                << std::flush;
 
             else if (token == "eval")
                 engine.trace_eval();
 
             else if (token == "compiler")
                 (*outputStream) << compiler_info() << '\n'
-                          << std::flush;
+                                << std::flush;
 
             else if (token == "export_net")
             {
@@ -496,16 +499,13 @@ namespace Stockfish
     }
 
     std::uint64_t UCIEngine::perft(
-        const Search::LimitsType &limits
-    )
+        const Search::LimitsType &limits)
     {
         auto nodes =
             engine.perft(
                 engine.fen(),
                 limits.perft,
-                engine.get_options()["UCI_Chess960"]
-            );
-
+                engine.get_options()["UCI_Chess960"]);
 
         std::stringstream ss;
 
@@ -514,13 +514,11 @@ namespace Stockfish
             << nodes
             << "\n";
 
-
-        if(outputCallback)
+        if (outputCallback)
             outputCallback(ss.str());
 
-
         return nodes;
-}
+    }
 
     void UCIEngine::position(std::istringstream &is)
     {
@@ -690,7 +688,7 @@ namespace Stockfish
             " score " +
             format_score(info.score);
 
-        if(outputCallback)
+        if (outputCallback)
             outputCallback(msg);
     }
 
@@ -717,7 +715,7 @@ namespace Stockfish
            << " time " << info.timeMs       //
            << " pv " << info.pv;            //
 
-        if(outputCallback)
+        if (outputCallback)
             outputCallback(ss.str());
     }
 
@@ -730,36 +728,32 @@ namespace Stockfish
            << " currmove " << info.currmove              //
            << " currmovenumber " << info.currmovenumber; //
 
-        if(outputCallback)
+        if (outputCallback)
             outputCallback(ss.str());
     }
 
-   void UCIEngine::on_bestmove(
+    void UCIEngine::on_bestmove(
         std::string_view bestmove,
-        std::string_view ponder
-    )
+        std::string_view ponder)
     {
         std::string msg =
             "bestmove " +
             std::string(bestmove);
 
-
-        if(!ponder.empty())
+        if (!ponder.empty())
         {
             msg +=
                 " ponder " +
                 std::string(ponder);
         }
 
-
-        if(outputCallback)
+        if (outputCallback)
             outputCallback(msg);
     }
 
     void UCIEngine::setStreams(
         std::istream *in,
-        std::ostream *out
-    )
+        std::ostream *out)
     {
         inputStream = in;
 
@@ -767,16 +761,14 @@ namespace Stockfish
         // If no stream is provided,
         // keep the private buffer
         //
-        if(out)
+        if (out)
             outputStream = out;
         else
             outputStream = &internalOutput;
     }
 
-
     void UCIEngine::execute(
-        const std::string& cmd
-    )
+        const std::string &cmd)
     {
         current = this;
 
@@ -785,22 +777,19 @@ namespace Stockfish
         //
         outputStream = &internalOutput;
 
-
         std::istringstream is(cmd);
 
         std::string token;
 
         is >> token;
 
-
-        if(token == "quit")
+        if (token == "quit")
         {
             engine.stop();
             return;
         }
 
-
-        if(token == "uci")
+        if (token == "uci")
         {
             (*outputStream)
                 << "id name "
@@ -813,8 +802,7 @@ namespace Stockfish
             return;
         }
 
-
-        if(token == "isready")
+        if (token == "isready")
         {
             (*outputStream)
                 << "readyok\n"
@@ -823,29 +811,25 @@ namespace Stockfish
             return;
         }
 
-
-        if(token == "position")
+        if (token == "position")
         {
             position(is);
             return;
         }
 
-
-        if(token == "go")
+        if (token == "go")
         {
             go(is);
             return;
         }
 
-
-        if(token == "stop")
+        if (token == "stop")
         {
             engine.stop();
             return;
         }
 
-
-        if(token == "setoption")
+        if (token == "setoption")
         {
             setoption(is);
             return;

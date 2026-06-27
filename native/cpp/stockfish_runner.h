@@ -13,61 +13,46 @@
 
 #include "queue_stream.h"
 #include "uci.h"
+#include "callback_stream.h"
 
 class StockfishRunner
 {
 public:
-
     using Callback =
-        std::function<void(const std::string&)>;
-
+        std::function<void(const std::string &)>;
 
     StockfishRunner(
-        Callback cb
-    );
-
+        Callback cb);
 
     ~StockfishRunner();
-
 
     void start();
 
     void send(
-        const std::string& cmd
-    );
-
+        const std::string &cmd);
 
     void stop();
 
-
 private:
-
     std::atomic<bool> stopping{false};
 
     std::atomic<bool> running{false};
 
-    std::atomic<bool> suppressOutput{false};
-
     Callback callback;
-
 
     std::thread thread;
 
+    // Input : JS -> Stockfish
     QueueStreamBuf inputBuffer;
-
 
     std::unique_ptr<std::istream> input;
 
+    // Output : Stockfish -> JS
+    std::unique_ptr<CallbackStreamBuf> outputBuffer;
 
+    std::unique_ptr<std::ostream> output;
 
     std::unique_ptr<Stockfish::UCIEngine> uci;
-
-    std::mutex outputMutex;
-
-    std::condition_variable outputCondition;
-
-    std::queue<std::string> outputs;
-
 };
 
 #endif
