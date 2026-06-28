@@ -3,6 +3,7 @@
 #include <streambuf>
 #include <functional>
 #include <string>
+#include <iostream>
 
 class CallbackStreamBuf : public std::streambuf
 {
@@ -20,6 +21,7 @@ protected:
     int overflow(
         int ch) override
     {
+        std::cerr << "[overflow] " << ch << "\n";
         if (ch != EOF)
         {
             buffer.push_back(
@@ -36,6 +38,7 @@ protected:
 
     int sync() override
     {
+        std::cerr << "[sync]\n";
         flush();
         return 0;
     }
@@ -43,6 +46,8 @@ protected:
 private:
     void flush()
     {
+        std::cerr << "[flush] '" << buffer << "'\n";
+
         if (buffer.empty())
             return;
 

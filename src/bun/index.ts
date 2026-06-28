@@ -73,10 +73,16 @@ const mainRPC = BrowserView.defineRPC<MainRPC>({
   handlers: {
     requests: {
       createEngine: () => {
-        console.log("RPC createEngine called");
-
         const id = engineService.create((line) => {
-          console.log("[ENGINE]", line);
+          console.log("[INDEX CALLBACK]", {
+            engineId: id,
+            line,
+          });
+
+          mainRPC.send.engineAnswer({
+            id,
+            line,
+          });
         });
 
         return id;
@@ -92,10 +98,12 @@ const mainRPC = BrowserView.defineRPC<MainRPC>({
         engineService.release(id);
       },
     },
-
     messages: {
-      log: ({ msg }) => {
-        console.log("[Webview]:", msg);
+      engineAnswer: {
+        params: {
+          engineId: 0,
+          line: "",
+        },
       },
     },
   },
@@ -121,6 +129,8 @@ const mainWindow = new BrowserWindow({
 // Events
 
 mainWindow.on("close", () => {
+  engineService.releaseAll();
+
   console.log("Main window closed");
 
   process.exit(0);

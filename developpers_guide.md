@@ -9,8 +9,7 @@
 3. Install C++ tools and libraries (ex: **build-essentials** on Ubuntu, **VS studio community** on Windows 11)
 4. Install Node-gyp globally (ex: `npm i -g node-gyp`)
 5. Download Stockfish NNUE files defined in **native/cpp/stockfish/src/evaluate.h** from [Stockfish NNUE repository](https://github.com/official-stockfish/networks). And set the in the folder **native/cpp/stockfish/src**
-6. Install vite.js : ``
-7. Install Bun dependencies for the project : `bun install`
+6. Install Bun dependencies for the project : `bun install`
 
 #### Compilation
 

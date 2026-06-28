@@ -7,7 +7,9 @@ export class Engine {
   ) {}
 
   start() {
-    this.native.start(this.output);
+    this.native.start((line: string) => {
+      this.output(line);
+    });
   }
 
   send(command: string) {

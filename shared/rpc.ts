@@ -1,57 +1,58 @@
-// shared/rpc.ts
-
 import type { RPCSchema } from "electrobun";
 
-
 export type MainRPC = RPCSchema<{
-    requests: {
-
-        createEngine: {
-            params: Record<string, never>;
-            response: number;
-        };
-
-
-        sendEngineCommand: {
-            params: {
-                id:number;
-                command:string;
-            };
-
-            response:void;
-        };
-
-
-        releaseEngine: {
-            params:{
-                id:number;
-            };
-
-            response:void;
-        };
-
+  requests: {
+    createEngine: {
+      params: Record<string, never>;
+      response: number;
     };
 
-
-    messages: {
-
-        log:{
-            msg:string;
-        };
-
-
-        engineOutput:{
-            id:number;
-            line:string;
-        };
-
+    sendEngineCommand: {
+      params: {
+        id: number;
+        command: string;
+      };
+      response: void;
     };
+
+    releaseEngine: {
+      params: {
+        id: number;
+      };
+      response: void;
+    };
+  };
+
+  messages: {
+    engineAnswer: {
+      id: number;
+      line: string;
+    };
+  };
 }>;
 
-
-
 export type WebviewRPC = RPCSchema<{
-    requests: Record<string, never>;
+  requests: {
+    createEngine: {
+      params: Record<string, never>;
+      response: number;
+    };
 
-    messages: Record<string, never>;
+    sendEngineCommand: {
+      params: {
+        id: number;
+        command: string;
+      };
+      response: void;
+    };
+  };
+
+  messages: {
+    engineAnswer: {
+      params: {
+        engineId: number;
+        line: string;
+      };
+    };
+  };
 }>;

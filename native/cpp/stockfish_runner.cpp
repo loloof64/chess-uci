@@ -37,7 +37,14 @@ void StockfishRunner::start()
                     << s;
 
                 if (callback)
+                {
                     callback(s);
+                }
+                else
+                {
+                    std::cerr
+                        << "[RUNNER] callback missing\n";
+                }
             });
 
     output =
