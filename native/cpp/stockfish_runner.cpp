@@ -1,14 +1,15 @@
+#include "misc.h"
 #include "stockfish_runner.h"
+#include "stockfish_init.h"
 
 #include <chrono>
 #include <thread>
-
-#include "misc.h"
 
 StockfishRunner::StockfishRunner(
     Callback cb)
     : callback(cb)
 {
+    std::cerr << "[runner] created\n";
 }
 
 StockfishRunner::~StockfishRunner()
@@ -18,11 +19,12 @@ StockfishRunner::~StockfishRunner()
 
 void StockfishRunner::start()
 {
+    std::cerr << "[start] called\n";
+
     if (running)
         return;
 
-    Stockfish::Bitboards::init();
-    Stockfish::Position::init();
+    StockfishInit::init();
 
     input =
         std::make_unique<std::istream>(
@@ -73,15 +75,58 @@ void StockfishRunner::start()
                         argc,
                         argv);
 
+                uci->setOutputCallback(
+                    [this](std::string msg)
+                    {
+                        (*output) << msg << "\n"
+                                  << std::flush;
+                    });
+
                 uci->setStreams(
                     input.get(),
                     output.get());
 
+                {
+                    std::lock_guard<std::mutex> lock(
+                        readyMutex);
+
+                    loopReady = true;
+                }
+
+                readyCv.notify_one();
+
                 std::cerr << "[thread] entering loop\n";
 
-                uci->loop();
+                std::string cmd;
+
+                while (std::getline(*input, cmd))
+                {
+                    if (cmd.empty())
+                        continue;
+
+                    std::cerr
+                        << "[thread] execute: "
+                        << cmd
+                        << std::endl;
+
+                    uci->execute(cmd);
+
+                    if (cmd == "quit")
+                        break;
+                }
+
                 std::cerr << "[thread] loop ended\n";
             });
+
+    std::unique_lock<std::mutex> lock(
+        readyMutex);
+
+    readyCv.wait(
+        lock,
+        [this]()
+        {
+            return loopReady;
+        });
 }
 
 void StockfishRunner::send(

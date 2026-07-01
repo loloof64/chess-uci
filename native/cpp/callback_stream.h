@@ -21,7 +21,6 @@ protected:
     int overflow(
         int ch) override
     {
-        std::cerr << "[overflow] " << ch << "\n";
         if (ch != EOF)
         {
             buffer.push_back(

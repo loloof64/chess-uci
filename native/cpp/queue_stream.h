@@ -1,17 +1,16 @@
 #pragma once
 
 #include <streambuf>
+#include <string>
 #include <queue>
 #include <mutex>
 #include <condition_variable>
-#include <string>
 #include <iostream>
 
 class QueueStreamBuf : public std::streambuf
 {
 public:
-    void push(
-        const std::string &data)
+    void push(const std::string &data)
     {
         {
             std::lock_guard<std::mutex> lock(mutex);
@@ -20,11 +19,6 @@ public:
         }
 
         condition.notify_one();
-    }
-
-    void close()
-    {
-        push("quit\n");
     }
 
 protected:
@@ -41,8 +35,6 @@ protected:
                 return !queue.empty();
             });
 
-        std::cerr << "[QueueStreamBuf] data received\n";
-
         buffer = queue.front();
 
         queue.pop();
@@ -55,10 +47,20 @@ protected:
         return traits_type::to_int_type(*gptr());
     }
 
+    int_type uflow() override
+    {
+        auto c = underflow();
+
+        if (c != traits_type::eof())
+            gbump(1);
+
+        return c;
+    }
+
 private:
     std::queue<std::string> queue;
 
-    std::string buffer;
+    std::string buffer; // <-- singulier
 
     std::mutex mutex;
 

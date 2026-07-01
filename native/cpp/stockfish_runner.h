@@ -53,6 +53,13 @@ private:
     std::unique_ptr<std::ostream> output;
 
     std::unique_ptr<Stockfish::UCIEngine> uci;
+
+    // Synchronization
+    std::mutex readyMutex;
+
+    std::condition_variable readyCv;
+
+    bool loopReady = false;
 };
 
 #endif
