@@ -272,13 +272,20 @@ namespace Stockfish
 
     void UCIEngine::go(std::istringstream &is)
     {
-
-        Search::LimitsType limits = parse_limits(is);
+        auto limits = parse_limits(is);
 
         if (limits.perft)
+        {
             perft(limits);
-        else
-            engine.go(limits);
+            return;
+        }
+
+        std::thread(
+            [this, limits]() mutable
+            {
+                engine.go(limits);
+            })
+            .detach();
     }
 
     void UCIEngine::bench(std::istream &args)

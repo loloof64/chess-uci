@@ -36,7 +36,7 @@ export function MainToolbar({ addEngineCb }: MainToolbarProps) {
     });
     await electrobun.rpc?.request.sendEngineCommand({
       id: engineId,
-      command: "go movetime 1000",
+      command: "go movetime 10000",
     });
   }, [addEngineCb]);
 

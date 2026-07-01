@@ -154,6 +154,9 @@ void StockfishRunner::stop()
         send("quit");
     }
 
+    if (searchThread.joinable())
+        searchThread.join();
+
     if (thread.joinable())
         thread.join();
 

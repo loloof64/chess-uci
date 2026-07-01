@@ -41,6 +41,7 @@ private:
     Callback callback;
 
     std::thread thread;
+    std::thread searchThread;
 
     // Input : JS -> Stockfish
     QueueStreamBuf inputBuffer;
