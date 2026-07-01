@@ -74,11 +74,6 @@ const mainRPC = BrowserView.defineRPC<MainRPC>({
     requests: {
       createEngine: () => {
         const id = engineService.create((line) => {
-          console.log("[INDEX CALLBACK]", {
-            engineId: id,
-            line,
-          });
-
           mainRPC.send.engineAnswer({
             id,
             line,
@@ -89,8 +84,6 @@ const mainRPC = BrowserView.defineRPC<MainRPC>({
       },
 
       sendEngineCommand: ({ id, command }) => {
-        console.log("RPC sendEngineCommand", id, command);
-
         engineService.send(id, command);
       },
 

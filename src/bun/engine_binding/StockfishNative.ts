@@ -29,8 +29,6 @@ export class StockfishNative {
   }
 
   send(command: string) {
-    console.log("StockfishNative.send", command);
-
     this.engine.send(command);
   }
 

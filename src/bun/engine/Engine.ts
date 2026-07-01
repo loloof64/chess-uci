@@ -13,8 +13,6 @@ export class Engine {
   }
 
   send(command: string) {
-    console.log("Engine.send", command);
-
     this.native.send(command);
   }
 

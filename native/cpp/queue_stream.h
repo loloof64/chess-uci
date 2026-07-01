@@ -24,7 +24,6 @@ public:
 protected:
     int_type underflow() override
     {
-        std::cerr << "[QueueStreamBuf] underflow wait\n";
 
         std::unique_lock<std::mutex> lock(mutex);
 

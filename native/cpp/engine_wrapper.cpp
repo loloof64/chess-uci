@@ -1,15 +1,11 @@
 #include "engine_wrapper.h"
 
-
 Napi::FunctionReference
-EngineWrapper::constructor;
-
-
+    EngineWrapper::constructor;
 
 Napi::Object EngineWrapper::Init(
     Napi::Env env,
-    Napi::Object exports
-)
+    Napi::Object exports)
 {
 
     auto cls =
@@ -20,63 +16,43 @@ Napi::Object EngineWrapper::Init(
 
                 InstanceMethod(
                     "start",
-                    &EngineWrapper::Start
-                ),
+                    &EngineWrapper::Start),
 
                 InstanceMethod(
                     "send",
-                    &EngineWrapper::Send
-                ),
+                    &EngineWrapper::Send),
 
                 InstanceMethod(
                     "stop",
-                    &EngineWrapper::Stop
-                )
+                    &EngineWrapper::Stop)
 
-            }
-        );
-
+            });
 
     constructor =
         Napi::Persistent(cls);
 
-
     constructor.SuppressDestruct();
-
 
     exports.Set(
         "EngineWrapper",
-        cls
-    );
-
+        cls);
 
     return exports;
 }
 
-
-
 EngineWrapper::EngineWrapper(
-    const Napi::CallbackInfo& info
-)
-: Napi::ObjectWrap<EngineWrapper>(info)
+    const Napi::CallbackInfo &info)
+    : Napi::ObjectWrap<EngineWrapper>(info)
 {
-
 }
-
-
 
 EngineWrapper::~EngineWrapper()
 {
-    std::cout
-        << "[wrapper] destructor"
-        << std::endl;
-
     stopInternal();
 }
 
 Napi::Value EngineWrapper::Start(
-    const Napi::CallbackInfo& info
-)
+    const Napi::CallbackInfo &info)
 {
 
     if (runner)
@@ -87,15 +63,11 @@ Napi::Value EngineWrapper::Start(
     auto env =
         info.Env();
 
-
-
-    if(info.Length()==0 ||
-       !info[0].IsFunction())
+    if (info.Length() == 0 ||
+        !info[0].IsFunction())
     {
         return env.Undefined();
     }
-
-
 
     callback =
         Napi::ThreadSafeFunction::New(
@@ -103,86 +75,56 @@ Napi::Value EngineWrapper::Start(
             info[0].As<Napi::Function>(),
             "stockfish",
             0,
-            1
-        );
-
-
+            1);
 
     runner =
-    std::make_unique<StockfishRunner>(
-        [this](const std::string& line)
-        {
-            if (stopped)
-                return;
+        std::make_unique<StockfishRunner>(
+            [this](const std::string &line)
+            {
+                if (stopped)
+                    return;
 
+                auto *txt =
+                    new std::string(line);
 
-            auto* txt =
-                new std::string(line);
-
-
-            callback.NonBlockingCall(
-                txt,
-                []
-                (
-                    Napi::Env env,
-                    Napi::Function fn,
-                    std::string* value
-                )
-                {
-                    fn.Call(
-                        {
-                            Napi::String::New(
+                callback.NonBlockingCall(
+                    txt,
+                    [](
+                        Napi::Env env,
+                        Napi::Function fn,
+                        std::string *value)
+                    {
+                        fn.Call(
+                            {Napi::String::New(
                                 env,
-                                *value
-                            )
-                        }
-                    );
+                                *value)});
 
-                    delete value;
-                }
-            );
-        }
-    );
-
-
+                        delete value;
+                    });
+            });
 
     runner->start();
 
-
-
     return env.Undefined();
-
 }
 
-
-
-
-
 Napi::Value EngineWrapper::Send(
-    const Napi::CallbackInfo& info
-)
+    const Napi::CallbackInfo &info)
 {
 
-    if(!runner)
+    if (!runner)
         return info.Env().Undefined();
-
-
 
     runner->send(
         info[0]
-        .As<Napi::String>()
-        .Utf8Value()
-    );
-
+            .As<Napi::String>()
+            .Utf8Value());
 
     return info.Env().Undefined();
-
 }
 
-
 Napi::Value EngineWrapper::Stop(
-    const Napi::CallbackInfo& info
-)
+    const Napi::CallbackInfo &info)
 {
     stopInternal();
     return info.Env().Undefined();

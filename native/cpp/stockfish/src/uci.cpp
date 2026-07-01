@@ -98,35 +98,30 @@ namespace Stockfish
         engine.set_on_iter(
             [this](const auto &i)
             {
-                std::cerr << "[SF] on_iter\n";
                 on_iter(i);
             });
 
         engine.set_on_update_no_moves(
             [this](const auto &i)
             {
-                std::cerr << "[SF] on_update_no_moves\n";
                 on_update_no_moves(i);
             });
 
         engine.set_on_update_full(
             [this](const auto &i)
             {
-                std::cerr << "[SF] on_update_full\n";
                 on_update_full(i, engine.get_options()["UCI_ShowWDL"]);
             });
 
         engine.set_on_bestmove(
             [this](const auto &bm, const auto &p)
             {
-                std::cerr << "[SF] on_bestmove\n";
                 on_bestmove(bm, p);
             });
 
         engine.set_on_verify_networks(
             [this](const auto &s)
             {
-                std::cerr << "[SF] on_verify_networks\n";
                 print_info_string(s);
             });
     }
@@ -800,7 +795,6 @@ namespace Stockfish
     void UCIEngine::execute(
         const std::string &cmd)
     {
-        std::cerr << "[SF] execute\n";
 
         current = this;
 

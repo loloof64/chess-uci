@@ -37,7 +37,6 @@ protected:
 
     int sync() override
     {
-        std::cerr << "[sync]\n";
         flush();
         return 0;
     }
@@ -45,7 +44,6 @@ protected:
 private:
     void flush()
     {
-        std::cerr << "[flush] '" << buffer << "'\n";
 
         if (buffer.empty())
             return;

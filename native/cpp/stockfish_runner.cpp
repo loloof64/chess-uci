@@ -9,7 +9,6 @@ StockfishRunner::StockfishRunner(
     Callback cb)
     : callback(cb)
 {
-    std::cerr << "[runner] created\n";
 }
 
 StockfishRunner::~StockfishRunner()
@@ -19,7 +18,6 @@ StockfishRunner::~StockfishRunner()
 
 void StockfishRunner::start()
 {
-    std::cerr << "[start] called\n";
 
     if (running)
         return;
@@ -34,18 +32,9 @@ void StockfishRunner::start()
         std::make_unique<CallbackStreamBuf>(
             [this](const std::string &s)
             {
-                std::cerr
-                    << "[CALLBACK STREAM] "
-                    << s;
-
                 if (callback)
                 {
                     callback(s);
-                }
-                else
-                {
-                    std::cerr
-                        << "[RUNNER] callback missing\n";
                 }
             });
 
@@ -59,8 +48,6 @@ void StockfishRunner::start()
         std::thread(
             [this]()
             {
-                std::cerr << "[thread] started\n";
-
                 int argc = 1;
 
                 char name[] = "stockfish";
@@ -95,8 +82,6 @@ void StockfishRunner::start()
 
                 readyCv.notify_one();
 
-                std::cerr << "[thread] entering loop\n";
-
                 std::string cmd;
 
                 while (std::getline(*input, cmd))
@@ -104,18 +89,11 @@ void StockfishRunner::start()
                     if (cmd.empty())
                         continue;
 
-                    std::cerr
-                        << "[thread] execute: "
-                        << cmd
-                        << std::endl;
-
                     uci->execute(cmd);
 
                     if (cmd == "quit")
                         break;
                 }
-
-                std::cerr << "[thread] loop ended\n";
             });
 
     std::unique_lock<std::mutex> lock(
@@ -132,11 +110,6 @@ void StockfishRunner::start()
 void StockfishRunner::send(
     const std::string &cmd)
 {
-    std::cerr
-        << "[runner] send: "
-        << cmd
-        << std::endl;
-
     inputBuffer.push(
         cmd + "\n");
 }
@@ -145,8 +118,6 @@ void StockfishRunner::stop()
 {
     if (stopping.exchange(true))
         return;
-
-    std::cout << "[runner] stop() begin" << std::endl;
 
     if (running)
     {
@@ -161,6 +132,4 @@ void StockfishRunner::stop()
         thread.join();
 
     running = false;
-
-    std::cout << "[runner] stop() end" << std::endl;
 }
