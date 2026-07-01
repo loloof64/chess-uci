@@ -10,7 +10,7 @@ function MainToolbarButton({ text, clickCb }: MainToolbarButtonProps) {
   return (
     <button
       onClick={clickCb}
-      className="size-[60px] bg-gray-200 opacity-75 text-orange-900 flex justify-center items-center text-5xl"
+      className="size-15 bg-gray-200 opacity-75 text-orange-900 flex justify-center items-center text-5xl"
     >
       {text}
     </button>
@@ -40,7 +40,7 @@ export function MainToolbar({ addEngineCb }: MainToolbarProps) {
   }, [addEngineCb]);
 
   return (
-    <div className="w-2/3 h-[80px] border-5 border-amber-200 rounded-full flex justify-center items-center">
+    <div className="w-2/3 h-20 border-5 border-amber-200 rounded-full flex justify-center items-center">
       <MainToolbarButton text="+" clickCb={addEngineFn} />
     </div>
   );
