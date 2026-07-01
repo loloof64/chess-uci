@@ -24,7 +24,6 @@ interface MainToolbarProps {
 export function MainToolbar({ addEngineCb }: MainToolbarProps) {
   const addEngineFn = useCallback(async () => {
     const engineId = await electrobun.rpc?.request.createEngine();
-    console.log("engineId", engineId);
     addEngineCb(engineId);
     await electrobun.rpc?.request.sendEngineCommand({
       id: engineId,
