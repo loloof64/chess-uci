@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "scripts": {
     "start": "vite build && electrobun dev",
-    "dev": "vite build && concurrently \"vite build --watch\" \"electrobun dev --watch\"",
+    "dev": "bun run scripts/dev-watch.ts",
     "build:canary": "vite build && electrobun build --env=canary",
     "build:stable": "vite build && electrobun build --env=stable",
     "lint": "biome check .",
