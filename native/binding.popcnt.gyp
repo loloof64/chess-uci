@@ -3,7 +3,7 @@
     {
       "target_name": "stockfish",
 
-       "sources": [
+      "sources": [
         "cpp/addon.cpp",
         "cpp/engine_wrapper.cpp",
         "cpp/stockfish_runner.cpp",
@@ -55,26 +55,14 @@
         "-O3",
         "-fexceptions",
         "-Werror",
-        "-msse",
-        "-msse2",
-        "-mssse3",
         "-msse3",
-        "-mpopcnt",
-        "-msse4.1",
-        "-mavx2",
-        "-mbmi",
-        "-mbmi2",
+        "-mpopcnt"
       ],
 
       "defines": [
         "NDEBUG",
         "IS_64BIT",
         "USE_POPCNT",
-        "USE_SSE2",
-        "USE_SSSE3",
-        "USE_SSE41",
-        "USE_AVX2",
-        "USE_PEXT",
         "NODE_ADDON_API_CPP_EXCEPTIONS"
       ],
 

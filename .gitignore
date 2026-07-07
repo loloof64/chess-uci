@@ -7,8 +7,23 @@ build/
 *.nnue
 
 /artifacts/
+
 /native/linux-generic/
 /native/linux-avx/
 /native/linux-avx2/
+/native/linux-avx512/
+/native/linux-avx-512icl/
+/native/linux-avxvnni/
 /native/linux-bmi2/
+/native/linux-popcnt/
+
+/native/windows-generic/
+/native/windows-avx/
+/native/windows-avx2/
+/native/windows-avx512/
+/native/windows-avx-512icl/
+/native/windows-avxvnni/
+/native/windows-bmi2/
+/native/windows-popcnt/
+
 test.txt

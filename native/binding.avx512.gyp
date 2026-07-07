@@ -3,7 +3,7 @@
     {
       "target_name": "stockfish",
 
-       "sources": [
+      "sources": [
         "cpp/addon.cpp",
         "cpp/engine_wrapper.cpp",
         "cpp/stockfish_runner.cpp",
@@ -64,6 +64,10 @@
         "-mavx2",
         "-mbmi",
         "-mbmi2",
+        "-mavx512f",
+        "-mavx512bw",
+        "-mavx512dq",
+        "-mavx512vl",
       ],
 
       "defines": [
@@ -75,6 +79,7 @@
         "USE_SSE41",
         "USE_AVX2",
         "USE_PEXT",
+        "USE_AVX512",
         "NODE_ADDON_API_CPP_EXCEPTIONS"
       ],
 

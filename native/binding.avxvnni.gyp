@@ -55,14 +55,29 @@
         "-O3",
         "-fexceptions",
         "-Werror",
-        "-mavx",
-        "-mpopcnt"
+        "-msse",
+        "-msse2",
+        "-mssse3",
+        "-msse3",
+        "-mpopcnt",
+        "-msse4.1",
+        "-mavx2",
+        "-mbmi",
+        "-mbmi2",
+        "-mavxvnni",
       ],
 
       "defines": [
         "NDEBUG",
         "IS_64BIT",
-        "USE_AVX",
+        "USE_POPCNT",
+        "USE_SSE2",
+        "USE_SSSE3",
+        "USE_SSE41",
+        "USE_AVX2",
+        "USE_PEXT",
+        "USE_VNNI",
+        "USE_AVXVNNI",
         "NODE_ADDON_API_CPP_EXCEPTIONS"
       ],
 
