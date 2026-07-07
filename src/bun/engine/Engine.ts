@@ -16,8 +16,8 @@ export class Engine {
     this.native.send(command);
   }
 
-  stop() {
-    this.native.stop();
+  destroy() {
+    this.native.destroy();
   }
 
   uci() {

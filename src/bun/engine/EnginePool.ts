@@ -36,7 +36,7 @@ export class EnginePool {
 
     if (!engine) return;
 
-    engine.stop();
+    engine.destroy();
 
     this.engines.delete(id);
   }
@@ -45,6 +45,7 @@ export class EnginePool {
     for (const id of this.engines.keys()) {
       this.release(id);
     }
+    this.engines.clear();
   }
 
   size() {

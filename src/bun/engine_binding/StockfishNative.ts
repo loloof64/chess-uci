@@ -1,12 +1,12 @@
-// src/bun/engine_binding/StockfishNative.ts
-
 import path from "node:path";
 import fs from "node:fs";
 
 function loadNativeAddon() {
-  const root = path.resolve(process.cwd(), "../../../../");
-
-  const addonPath = path.join(root, "native/linux-generic", "stockfish.node");
+  const addonPath = path.resolve(
+    __dirname,
+    "../../../",
+    "native/linux-generic/stockfish.node",
+  );
 
   if (!fs.existsSync(addonPath)) {
     throw new Error("Missing addon " + addonPath);
@@ -34,5 +34,10 @@ export class StockfishNative {
 
   stop() {
     this.engine.stop();
+  }
+
+  destroy() {
+    this.engine.stop();
+    this.engine = null;
   }
 }

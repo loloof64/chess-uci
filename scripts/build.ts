@@ -21,24 +21,15 @@ if (process.platform === "win32") {
     `;
 }
 
-//
-// Frontend + Electrobun
-//
-
 if (mode === "dev") {
+  //
+  // Frontend + Electrobun
+  //
   await Bun.$`
-        bun run dev:hmr
-    `;
-
-  await Bun.$`
-        concurrently "bun run hmr" "bun run start"
+        bun run dev
     `;
 } else {
   await Bun.$`
         bun run build:stable
-    `;
-
-  await Bun.$`
-        electrobun build --env=stable
     `;
 }
