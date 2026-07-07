@@ -4,6 +4,7 @@
   "scripts": {
     "start": "vite build && electrobun dev",
     "dev": "bun run scripts/dev-watch.ts --",
+    "build": "bun run scripts/build.ts --",
     "build:canary": "vite build && electrobun build --env=canary",
     "build:stable": "vite build && electrobun build --env=stable",
     "lint": "biome check .",

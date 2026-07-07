@@ -1,7 +1,5 @@
 const args = process.argv.slice(2);
 
-const mode = args.includes("--release") ? "release" : "dev";
-
 const cpu =
   args.find((x) => x.startsWith("--cpu="))?.split("=")[1] ?? "generic";
 
@@ -21,17 +19,6 @@ if (process.platform === "win32") {
     `;
 }
 
-if (mode === "dev") {
-  //
-  // Frontend + Electrobun
-  //
-  // Native stockfish for ${cpu} was already built above; dev-watch.ts would
-  // otherwise rebuild it again for "generic" (its own default) on startup.
-  await Bun.$`
-        bun run scripts/dev-watch.ts --cpu=${cpu} --skip-native-build
-    `;
-} else {
-  await Bun.$`
-        bun run build:stable
-    `;
-}
+await Bun.$`
+      bun run build:stable
+  `;

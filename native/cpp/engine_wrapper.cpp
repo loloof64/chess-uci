@@ -49,7 +49,6 @@ EngineWrapper::EngineWrapper(
 EngineWrapper::~EngineWrapper()
 {
     stopInternal();
-    std::cout << "Engine destroyed\n";
 }
 
 Napi::Value EngineWrapper::Start(

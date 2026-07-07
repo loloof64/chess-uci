@@ -119,33 +119,21 @@ void StockfishRunner::send(
 
 void StockfishRunner::stop()
 {
-    std::cout << "stop 1\n";
-
     if (stopping.exchange(true))
     {
-        std::cout << "already stopping\n";
         return;
     }
 
-    std::cout << "stop 2\n";
-
     if (running)
     {
-        std::cout << "send quit\n";
         send("quit");
     }
 
-    std::cout << "join search\n";
-
     if (searchThread.joinable())
         searchThread.join();
-
-    std::cout << "join engine\n";
 
     if (thread.joinable())
         thread.join();
 
     running = false;
-
-    std::cout << "stop finished\n";
 }
