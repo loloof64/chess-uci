@@ -2,11 +2,13 @@ param(
     [string]$Variant = "generic"
 )
 
-$RootDir = Split-Path `
-    -Parent `
+$RootDir = Join-Path `
     (Split-Path `
         -Parent `
-        $MyInvocation.MyCommand.Path)
+        (Split-Path `
+            -Parent `
+            $MyInvocation.MyCommand.Path)) `
+    "native"
 
 
 Write-Host "Building Stockfish variant: $Variant"
@@ -41,7 +43,7 @@ node-gyp build
 
 # Store result
 $OutputDir =
-    "$RootDir\native\win32-$Variant"
+    "$RootDir\win32-$Variant"
 
 
 New-Item `

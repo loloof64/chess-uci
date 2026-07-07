@@ -2,7 +2,7 @@
 
 set -e
 
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)/native"
 
 VARIANT=${1:-generic}
 
@@ -30,12 +30,12 @@ node-gyp build
 
 # Store result
 mkdir -p \
-  "$ROOT_DIR/native/linux-$VARIANT"
+  "$ROOT_DIR/linux-$VARIANT"
 
 
 cp \
   "$ROOT_DIR/build/Release/stockfish.node" \
-  "$ROOT_DIR/native/linux-$VARIANT/stockfish.node"
+  "$ROOT_DIR/linux-$VARIANT/stockfish.node"
 
 
 echo "Done:"

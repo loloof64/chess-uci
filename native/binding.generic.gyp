@@ -54,22 +54,18 @@
         "-pthread",
         "-O3",
         "-fexceptions",
-        "-Werror",
-        "-mavx2",
-        "-mpopcnt"
+        "-Werror"
       ],
 
       "defines": [
         "NDEBUG",
         "IS_64BIT",
-        "USE_AVX2",
         "NODE_ADDON_API_CPP_EXCEPTIONS"
       ],
 
       "ldflags": [
         "-pthread"
       ],
-
 
       "msvs_settings": {
         "VCCLCompilerTool": {

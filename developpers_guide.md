@@ -17,5 +17,5 @@
 - Targets : debug (default) / release
 
 - Examples :
-  `bun run scripts/build.ts --cpu=avx2`(dev mode/ avx2 processors)
+  `bun run dev --cpu=avx2`(dev mode/ avx2 processors)
   `bun run build --release --cpu=avx2` (release mode / avx2 processors)

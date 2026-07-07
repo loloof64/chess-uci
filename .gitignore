@@ -8,4 +8,7 @@ build/
 
 /artifacts/
 /native/linux-generic/
+/native/linux-avx/
+/native/linux-avx2/
+/native/linux-bmi2/
 test.txt

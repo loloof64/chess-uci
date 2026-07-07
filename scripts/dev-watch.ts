@@ -8,6 +8,10 @@ import { watch } from "node:fs";
 // process ourselves lets us fully kill the process group and confirm death
 // before rebuilding.
 
+const args = process.argv.slice(2);
+const cpu = args.find((x) => x.startsWith("--cpu="))?.split("=")[1] ?? "generic";
+const skipNativeBuild = args.includes("--skip-native-build");
+
 const WATCH_DIRS = ["src"];
 const DEBOUNCE_MS = 300;
 
@@ -42,6 +46,15 @@ async function killChildTree() {
 
   await child.exited.catch(() => {});
   child = null;
+}
+
+async function buildNativeStockfish() {
+  if (skipNativeBuild) return;
+  if (process.platform === "linux") {
+    await Bun.$`bash scripts/build_stockfish.sh ${cpu}`;
+  } else if (process.platform === "win32") {
+    await Bun.$`powershell scripts/build_stockfish.ps1 -Cpu ${cpu}`;
+  }
 }
 
 async function buildFrontend() {
@@ -123,4 +136,5 @@ for (const dir of WATCH_DIRS) {
   });
 }
 
+await buildNativeStockfish();
 await rebuild("initial build");

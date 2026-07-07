@@ -25,8 +25,10 @@ if (mode === "dev") {
   //
   // Frontend + Electrobun
   //
+  // Native stockfish for ${cpu} was already built above; dev-watch.ts would
+  // otherwise rebuild it again for "generic" (its own default) on startup.
   await Bun.$`
-        bun run dev
+        bun run scripts/dev-watch.ts --cpu=${cpu} --skip-native-build
     `;
 } else {
   await Bun.$`
