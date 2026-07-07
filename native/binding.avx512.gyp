@@ -7,7 +7,7 @@
         "cpp/addon.cpp",
         "cpp/engine_wrapper.cpp",
         "cpp/stockfish_runner.cpp",
-"cpp/stockfish_init.cpp",
+        "cpp/stockfish_init.cpp",
 
         "cpp/stockfish/src/benchmark.cpp",
         "cpp/stockfish/src/bitboard.cpp",
@@ -42,7 +42,7 @@
       ],
 
       "dependencies": [
-        "<!@(node -p \"require('node-addon-api').gyp\")"
+        "<!(node -p \"require('node-addon-api').gyp\")"
       ],
 
       "cflags": [

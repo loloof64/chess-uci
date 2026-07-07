@@ -17,13 +17,13 @@ build/
 /native/linux-bmi2/
 /native/linux-popcnt/
 
-/native/windows-generic/
-/native/windows-avx/
-/native/windows-avx2/
-/native/windows-avx512/
-/native/windows-avx-512icl/
-/native/windows-avxvnni/
-/native/windows-bmi2/
-/native/windows-popcnt/
+/native/win32-generic/
+/native/win32-avx/
+/native/win32-avx2/
+/native/win32-avx512/
+/native/win32-avx-512icl/
+/native/win32-avxvnni/
+/native/win32-bmi2/
+/native/win32-popcnt/
 
 test.txt

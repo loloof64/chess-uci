@@ -24,6 +24,16 @@ let shuttingDown = false;
 async function killChildTree() {
   if (!child) return;
   const pid = child.pid;
+
+  if (process.platform === "win32") {
+    // No process groups / setsid on Windows — ask taskkill to tear down the
+    // whole tree (launcher + grandchild bun runtime holding stockfish.node).
+    Bun.spawnSync(["taskkill", "/PID", String(pid), "/T", "/F"]);
+    await child.exited.catch(() => {});
+    child = null;
+    return;
+  }
+
   // `setsid` made `pid` a session/process-group leader, so -pid targets the
   // whole tree it spawned (launcher + grandchild bun runtime holding stockfish.node).
   try {
@@ -71,10 +81,16 @@ async function buildAndLaunch() {
 
   // `electrobun dev` (no --watch) builds the app bundle and launches it in
   // one shot — this is the path that works reliably (see `bun run start`).
-  // setsid puts the whole subtree (launcher + grandchild bun runtime) into a
-  // fresh session/process group whose leader pid == child.pid, so we can
-  // reliably tear it all down with a single process.kill(-pid, ...).
-  const spawned = Bun.spawn(["setsid", "bunx", "electrobun", "dev"], {
+  // On non-Windows, setsid puts the whole subtree (launcher + grandchild bun
+  // runtime) into a fresh session/process group whose leader pid == child.pid,
+  // so we can reliably tear it all down with a single process.kill(-pid, ...).
+  // On Windows there's no such thing, so we spawn directly and tear the tree
+  // down with taskkill /T instead (see killChildTree).
+  const cmd =
+    process.platform === "win32"
+      ? ["bunx", "electrobun", "dev"]
+      : ["setsid", "bunx", "electrobun", "dev"];
+  const spawned = Bun.spawn(cmd, {
     stdio: ["inherit", "inherit", "inherit"],
   });
   child = spawned;
